@@ -4,6 +4,7 @@ import LoginPage from "./pages/LoginPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SignupPage from "./pages/signupPage";
 import AuthPage from "./pages/authLandingPage";
+import BrowseEvents from "./pages/browseEvents";
 
 const ParticipantDashboard = () => <h2>Participant Dashboard</h2>;
 const OrganizerDashboard = () => <h2>Organizer Dashboard</h2>;
@@ -17,6 +18,7 @@ function App(){
                     <Route path="/" element={<AuthPage />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/signup" element={<SignupPage />} />
+                    <Route path="/browse" element={<BrowseEvents />} />
                     {/*Dashboard routes*/}
                     <Route path="/participant/dashboard" element={
                         <ProtectedRoute allowedRoles={["participant"]}>

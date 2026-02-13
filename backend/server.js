@@ -7,6 +7,8 @@ import { connectDB } from "./config/db.js"
 import bcrypt from "bcrypt";
 import User from "./models/User.js";
 
+//import eventRoutes from "./routes/eventRoutes.js";
+
 const PORT = process.env.PORT;
 
 const createAdminIfNotExists = async ()=>{

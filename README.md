@@ -11,14 +11,17 @@ Assignment_1/
 │   │   └── db.js        # MongoDB connection setup
 │   ├── controllers/     # Route controllers
 │   │   └── authcontrollers.js  # Authentication logic
+│   │   └── eventControllers.js # Event management logic
 │   ├── middleware/      # Custom middleware
 │   │   ├── authMiddleware.js   # JWT verification
 │   │   └── roleMiddleware.js   # Role-based access control
 │   ├── models/          # Database models
 │   │   ├── User.js      # User model (admin, organizer)
 │   │   └── participant.js      # Participant model
+│   │   └── events.js     # Event model
 │   ├── routes/          # API routes
 │   │   └── authroutes.js       # Authentication endpoints
+│   │   └── eventRoutes.js      # Event endpoints
 │   ├── app.js           # Express app configuration
 │   ├── server.js        # Entry point
 │   └── package.json     # Backend dependencies
@@ -29,12 +32,14 @@ Assignment_1/
     │   │   ├── loginForm.jsx      # Login form component
     │   │   ├── signupForm.jsx     # Signup form component
     │   │   └── ProtectedRoute.jsx # Route protection wrapper
+    │   │   └── participantNavbar.jsx # Participant navigation bar
     │   ├── context/     # Context API providers
     │   │   └── AuthContext.jsx    # Authentication state management
     │   ├── pages/       # Page components
     │   │   ├── LoginPage.jsx      # Login page
     │   │   ├── signupPage.jsx     # Signup page
     │   │   └── authLandingPage.jsx # Auth landing page
+    │   │   └── browseEvents.jsx   # Browse events page
     │   ├── services/    # API service calls
     │   │   ├── api.js             # Axios instance
     │   │   └── authServices.js    # Auth API functions
@@ -173,6 +178,15 @@ You can test different user roles:
 - `POST /api/auth/login` - Login user (admin, organizer, or participant)
   - Body: `{ email, password }`
   - Returns: `{ token, role }`
+- `POST /api/auth/createOrganizer` - Create an organizer account
+  - Body: `{ firstName, lastName, email, password }`
+
+### Events
+- `POST /api/events/create` - Create a new event (organizer only)
+  - Auth: `Authorization: Bearer <token>`
+  - Body: `{ eventName, eventDescription, eventType, eligibility, registrationDeadline, eventStartDate, eventEndDate, registrationLimit, registrationFee, eventTags, merchandiseDetails, customFormFields }`
+- `GET /api/events/all` - List published events with optional filters
+  - Query: `search`, `type`, `eligibility`, `startDate`, `endDate`
 
 ### Protected Routes
 All protected routes require JWT token in Authorization header:
@@ -224,6 +238,8 @@ Create a `.env` file in the backend directory with:
 - ✅ Participant model with IIIT/Non-IIIT types
 - ✅ Auto-creation of admin user on server start
 - ✅ CORS configuration for frontend communication
+- ✅ Organizer creation endpoint
+- ✅ Event model and event CRUD (create/list)
 
 #### Frontend
 - ✅ React with Vite for fast development
@@ -239,6 +255,8 @@ Create a `.env` file in the backend directory with:
 - ✅ Axios integration for API calls
 - ✅ Token persistence in localStorage
 - ✅ Automatic redirect based on user role after login
+- ✅ Browse events page (`/browse`) with search and type filter
+- ✅ Participant navigation bar
 
 ## Project Status
 
