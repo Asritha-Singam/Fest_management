@@ -1,0 +1,16 @@
+// Is the user allowed to do this? → Authorization
+/*
+ Allow only specific roles
+ Block others
+*/
+
+export const authorizeRoles = (...allowedRoles) => {
+    return (req, res, next) => {
+        if (!req.user || ! allowedRoles.includes(req.user.role)) {
+            return res.status(403).json({ message: "Forbidden: You don't have permission to access this resource" });
+        }
+        next();
+    };
+};
+
+export default authorizeRoles;
