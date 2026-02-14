@@ -6,7 +6,7 @@ import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/authroutes.js';
 import eventRoutes from './routes/eventRoutes.js';
-
+import participantRoutes from './routes/participantRoutes.js';
 const app = express();
 
 app.use(express.json());
@@ -16,7 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 //import routes
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
-//participant
+app.use('/api/participants', participantRoutes);
 //organizer
 //admin
 

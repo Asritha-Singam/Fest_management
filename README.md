@@ -1099,10 +1099,240 @@ Get connection string from MongoDB Atlas:
 
 ---
 
+## Participant Event Registration & QR Code System
+
+### Overview
+Participants can register for events through the API. Upon successful registration, they receive an email with a unique ticket ID and QR code for event check-in.
+
+### Event Registration Pathway
+
+#### Step 1: Register as a Participant
+- **Endpoint:** `POST /api/auth/register`
+- **Method:** POST
+- **Body (JSON):**
+```json
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john@example.com",
+  "password": "SecurePass123"
+}
+```
+- **Response:**
+```json
+{
+  "message": "Participant registered successfully",
+  "status": 201
+}
+```
+
+#### Step 2: Login to Get JWT Token
+- **Endpoint:** `POST /api/auth/login`
+- **Method:** POST
+- **Body (JSON):**
+```json
+{
+  "email": "john@example.com",
+  "password": "SecurePass123"
+}
+```
+- **Response:**
+```json
+{
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "userId": "507f1f77bcf86cd799439011",
+  "role": "participant"
+}
+```
+
+#### Step 3: Register for an Event
+- **Endpoint:** `POST /api/participants/register/:eventId`
+- **Method:** POST
+- **Headers Required:**
+  ```
+  Authorization: Bearer <your-jwt-token>
+  Content-Type: application/json
+  ```
+- **URL Parameter:**
+  - `eventId`: MongoDB ObjectId of the event
+- **Body:** Empty or `{}`
+- **Response:**
+```json
+{
+  "success": true,
+  "message": "Registered for event successfully",
+  "ticketId": "FEL-1a2b3c-456789",
+  "status": 201
+}
+```
+
+#### Step 4: Email Confirmation with QR Code
+After successful registration, the participant automatically receives an email containing:
+- ✅ Event registration confirmation
+- ✅ **Ticket ID:** Unique identifier for check-in
+- ✅ **QR Code:** PNG image attached (proper email attachment, not blocked)
+- ✅ Event details (name, date)
+
+**Email Features:**
+- Uses **nodemailer** with Gmail SMTP
+- QR codes sent as **CID image attachments** (compatible with all email clients)
+- QR code encodes the ticket ID
+- Professional HTML email template
+
+### QR Code System Details
+
+#### QRCode Generation
+- **Library:** qrcode (NPM package)
+- **Data Encoded:** Ticket ID (`FEL-{eventId}-{randomNumber}`)
+- **Format:** PNG image, embedded in email
+
+#### Email Attachment Configuration
+```javascript
+{
+  filename: 'qrcode.png',
+  content: qrCodeBuffer,  // PNG buffer
+  cid: 'qrcode'           // Content ID for HTML embedding
+}
+```
+
+#### How to Reference in Email HTML
+```html
+<img src="cid:qrcode" alt="Event QR Code" style="width:200px; height:200px;" />
+```
+
+### Using the API with Postman
+
+#### Request Example (Step 3: Register for Event)
+```
+Method: POST
+URL: http://localhost:4001/api/participants/register/507f1f77bcf86cd799439012
+
+Headers:
+- Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+- Content-Type: application/json
+
+Body: 
+{}
+```
+
+### Validation Rules
+
+#### Registration Deadline
+- ❌ Cannot register if registration deadline has passed
+- ✅ Server checks: `new Date() > event.registrationDeadline`
+
+#### Event Capacity
+- ❌ Cannot register if event is full
+- ✅ Server checks: `registrationCount >= registrationLimit`
+
+#### Duplicate Registration
+- ❌ Cannot register twice for the same event
+- ✅ Server checks: Existing participation record
+
+#### Error Codes
+| Status | Message | Reason |
+|--------|---------|--------|
+| 404 | Event not found | Invalid eventId |
+| 400 | Registration deadline has passed | Event registration closed |
+| 400 | Event is full | Registration limit reached |
+| 400 | Already registered for this event | Duplicate registration attempt |
+| 401 | Unauthorized | Missing/invalid JWT token |
+| 403 | Forbidden | User is not a participant |
+| 500 | Error registering for event | Server error |
+
+### Email Configuration (`.env` file required)
+
+```env
+# Email Service Configuration
+EMAIL_USER=your-gmail@gmail.com
+EMAIL_PASS=your-app-specific-password
+
+# Gmail Setup Instructions:
+# 1. Enable 2-Step Verification on your Google Account
+# 2. Generate an App Password: https://myaccount.google.com/apppasswords
+# 3. Use that 16-character password as EMAIL_PASS
+```
+
+### View Registered Events
+
+#### Step 4: Get Participant's Events
+- **Endpoint:** `GET /api/participants/my-events`
+- **Method:** GET
+- **Headers Required:**
+  ```
+  Authorization: Bearer <your-jwt-token>
+  ```
+- **Response:**
+```json
+{
+  "success": true,
+  "upcoming": [
+    {
+      "_id": "507f1f77bcf86cd799439012",
+      "participant": "507f1f77bcf86cd799439011",
+      "event": {
+        "_id": "507f1f77bcf86cd799439012",
+        "name": "Tech Conference 2026",
+        "eventStartDate": "2026-03-15T09:00:00Z",
+        "eventEndDate": "2026-03-15T17:00:00Z"
+      },
+      "ticketId": "FEL-1a2b3c-456789",
+      "status": "Active"
+    }
+  ],
+  "completed": [],
+  "cancelled": []
+}
+```
+
+### Troubleshooting
+
+#### QR Code Not Showing in Email
+- ✅ **Solution:** Uses CID attachment system now (fixed in latest update)
+- ❌ Old base64 inline method was blocked by email clients
+
+#### "Cannot destructure property 'email'" Error
+- **Issue:** Malformed JSON in request
+- **Solution:** 
+  - ❌ Remove trailing commas from JSON
+  - ✅ Use valid JSON format
+
+#### "Already registered for this event"
+- **Issue:** You're trying to register twice
+- **Solution:** Check your registered events and select a different event
+
+#### Token Expired
+- **Issue:** JWT token has expired (default 7 days)
+- **Solution:** Login again to get a fresh token
+
+### Dependencies Required
+
+```json
+{
+  "dependencies": {
+    "qrcode": "^1.5.3",
+    "nodemailer": "^6.9.x",
+    "express": "^4.18.x",
+    "mongoose": "^7.x.x",
+    "jsonwebtoken": "^9.x.x",
+    "bcryptjs": "^2.4.x"
+  }
+}
+```
+
+Install with:
+```bash
+npm install qrcode nodemailer
+```
+
+---
+
 ## Future Enhancements
 
 ### Short Term (Next Sprint)
-- ⏳ Event registration functionality
+- ✅ Event registration functionality (COMPLETED)
+- ✅ QR code email system (COMPLETED)
 - ⏳ Participant dashboard UI
 - ⏳ Organizer dashboard UI
 - ⏳ Admin dashboard UI
@@ -1167,5 +1397,5 @@ This project is part of an academic assignment and is for educational purposes o
 
 ---
 
-**Last Updated:** February 14, 2026
-**Version:** 1.0.0 (Development)
+**Last Updated:** February 15, 2026
+**Version:** 1.1.0 (QR Code Email System Added)
