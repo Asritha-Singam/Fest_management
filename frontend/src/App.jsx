@@ -11,8 +11,13 @@ import Dashboard from "./pages/participant/dashboard";
 import TicketPage from "./pages/participant/ticketPage";
 import Profile from "./pages/participant/profile";
 import Navbar from "./components/participantNavbar";
-const OrganizerDashboard = () => <h2>Organizer Dashboard</h2>;
-const AdminDashboard = () => <h2>Admin Dashboard</h2>;
+import OrganizerDashboard from "./pages/organizer/organizerDashboard";
+import OrganizerEventDetail from "./pages/organizer/organizerEventDetail";
+import CreateEvent from "./pages/organizer/createEvent";
+import OrganizerProfile from "./pages/organizer/organizerProfile";
+import OngoingEvents from "./pages/organizer/ongoingEvents";
+import AdminDashboardComponent from "./pages/admin/adminDashboard";
+import CreateOrganizer from "./pages/admin/createOrganizer";
 
 function AppContent() {
     const { token, role } = useContext(AuthContext);
@@ -71,9 +76,39 @@ function AppContent() {
                             <OrganizerDashboard />
                         </ProtectedRoute>
                     } />
+                    <Route path="/organizer/events/:id" element={
+                        <ProtectedRoute allowedRoles={["organizer"]}>
+                            <OrganizerEventDetail />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/organizer/my-events/:id" element={
+                        <ProtectedRoute allowedRoles={["organizer"]}>
+                            <OrganizerEventDetail />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/organizer/ongoing" element={
+                        <ProtectedRoute allowedRoles={["organizer"]}>
+                            <OngoingEvents />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/organizer/create-event" element={
+                        <ProtectedRoute allowedRoles={["organizer"]}>
+                            <CreateEvent />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/organizer/profile" element={
+                        <ProtectedRoute allowedRoles={["organizer"]}>
+                            <OrganizerProfile />
+                        </ProtectedRoute>
+                    } />
                     <Route path="/admin/dashboard" element={
                         <ProtectedRoute allowedRoles={["admin"]}>
-                            <AdminDashboard />
+                            <AdminDashboardComponent />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/create-organizer" element={
+                        <ProtectedRoute allowedRoles={["admin"]}>
+                            <CreateOrganizer />
                         </ProtectedRoute>
                     } />
                 </Routes>

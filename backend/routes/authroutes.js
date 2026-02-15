@@ -5,6 +5,5 @@ const router = express.Router();
 
 router.post("/register", registerParticipant);
 router.post("/login", loginUser);
-router.post("/createOrganizer", createOrganizer);
 
 export default router;

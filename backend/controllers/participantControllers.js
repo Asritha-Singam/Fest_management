@@ -39,31 +39,40 @@ export const registerForEvent = async (req, res) => {
     event.registrationCount = (event.registrationCount || 0) + 1;
 
     await event.save();
+    
     const user = await User.findById(userId);
-    const qrCodeData = `Ticket ID: ${ticketId}`;
-    const qrCodeBuffer = await QRCode.toBuffer(qrCodeData);
+    
+    // Try sending email with QR code (don't fail registration if email fails)
+    try {
+      const qrCodeData = `Ticket ID: ${ticketId}`;
+      const qrCodeBuffer = await QRCode.toBuffer(qrCodeData);
 
-    await sendEmail(
-      user.email, 
-      "Event Registration Confirmation", 
-      `
-        <h2>Event Registration Confirmation</h2>
-        <p>Hello ${user.firstName} ${user.lastName},</p>
-        <p>You have successfully registered for the event: <strong>${event.name}</strong></p>
-        <p><strong>Ticket ID:</strong> ${ticketId}</p>
-        <p><strong>Event Date:</strong> ${new Date(event.eventStartDate).toLocaleDateString()}</p>
-        <p>Please find your QR code below:</p>
-        <img src="cid:qrcode" alt="Event QR Code" style="width:200px; height:200px;" />
-        <p>Show this QR code at the event entrance.</p>
-      `,
-      [
-        {
-          filename: 'qrcode.png',
-          content: qrCodeBuffer,
-          cid: 'qrcode'
-        }
-      ]
-    );
+      await sendEmail(
+        user.email, 
+        "Event Registration Confirmation", 
+        `
+          <h2>Event Registration Confirmation</h2>
+          <p>Hello ${user.firstName} ${user.lastName},</p>
+          <p>You have successfully registered for the event: <strong>${event.eventName}</strong></p>
+          <p><strong>Ticket ID:</strong> ${ticketId}</p>
+          <p><strong>Event Date:</strong> ${new Date(event.eventStartDate).toLocaleDateString()}</p>
+          <p>Please find your QR code below:</p>
+          <img src="cid:qrcode" alt="Event QR Code" style="width:200px; height:200px;" />
+          <p>Show this QR code at the event entrance.</p>
+        `,
+        [
+          {
+            filename: 'qrcode.png',
+            content: qrCodeBuffer,
+            cid: 'qrcode'
+          }
+        ]
+      );
+    } catch (emailError) {
+      console.error("Failed to send confirmation email:", emailError.message);
+      // Continue anyway - registration was successful
+    }
+
     res.status(201).json({
       success: true,
       message: "Registered for event successfully",
