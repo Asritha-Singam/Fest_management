@@ -54,7 +54,7 @@ export const getAllEvents = async (req, res) => {
   try {
     const { search, type, eligibility, startDate, endDate } = req.query;
 
-    let query = { status: "PUBLISHED" };
+    let query = { status: "published" };
 
     // Filter by type
     if (type) {

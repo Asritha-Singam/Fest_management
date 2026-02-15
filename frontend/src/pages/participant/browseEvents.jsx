@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import ParticipantNavbar from "../components/participantNavbar";
 
 const BrowseEvents = () => {
     const [events, setEvents] = useState([]);
@@ -30,8 +29,6 @@ const BrowseEvents = () => {
 
    return (
     <div>
-      <ParticipantNavbar />
-
       <div style={{ padding: "30px" }}>
         <h2>Browse Events</h2>
 

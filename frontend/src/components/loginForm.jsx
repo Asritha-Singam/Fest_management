@@ -22,7 +22,7 @@ const LoginForm = () => {
       login(token, role);
 
       if (role === "participant") {
-        navigate("/participant/dashboard");
+        navigate("/dashboard");
       } else if (role === "organizer") {
         navigate("/organizer/dashboard");
       } else if (role === "admin") {

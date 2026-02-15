@@ -3,6 +3,7 @@ import Participation from "../models/participation.js";
 import QRCode from "qrcode";
 import {sendEmail} from "../utils/sendEmail.js";
 import User from "../models/User.js";
+import Participant from "../models/participant.js";
 
 export const registerForEvent = async (req, res) => {
   try {
@@ -114,4 +115,29 @@ export const getMyEvents = async (req, res) => {
       error: error.message
     });
   }
+};
+export const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { firstName, lastName, contactNumber,collegeOROrg, interests, followedOrganizers } = req.body;
+    const user = await User.findByIdAndUpdate(userId, { firstName, lastName }, { new: true });
+    const participant = await Participant.findOneAndUpdate(
+      { userId },
+      { contactNumber, collegeOROrg, interests, followedOrganizers },
+      { new: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user,
+      participant
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error updating profile",
+      error: error.message
+    });
+  } 
 };
