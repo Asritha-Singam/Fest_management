@@ -31,7 +31,7 @@ const participantSchema = new mongoose.Schema(
 
     followedOrganizers: {
       type: [mongoose.Schema.Types.ObjectId],
-      ref: "Organizer",
+      ref: "User",
       default: [],
     },
   },

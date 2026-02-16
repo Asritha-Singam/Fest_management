@@ -10,6 +10,7 @@ import BrowseEvents from "./pages/participant/browseEvents";
 import Dashboard from "./pages/participant/dashboard";
 import TicketPage from "./pages/participant/ticketPage";
 import Profile from "./pages/participant/profile";
+import Onboarding from "./pages/participant/onboarding";
 import Navbar from "./components/participantNavbar";
 import OrganizerDashboard from "./pages/organizer/organizerDashboard";
 import OrganizerEventDetail from "./pages/organizer/organizerEventDetail";
@@ -25,7 +26,7 @@ function AppContent() {
     
     // Show navbar only for authenticated participants and not on auth pages
     const showNavbar = token && role === "participant" && 
-                       !["/", "/login", "/signup"].includes(location.pathname);
+                       !["/", "/login", "/signup", "/onboarding"].includes(location.pathname);
 
     return (
         <>
@@ -37,6 +38,15 @@ function AppContent() {
                     <Route path="/signup" element={<SignupPage />} />
 
                     {/* Protected Participant Routes */}
+                    <Route
+                        path="/onboarding"
+                        element={
+                        <ProtectedRoute allowedRoles={["participant"]}>
+                            <Onboarding />
+                        </ProtectedRoute>
+                        }
+                    />
+
                     <Route
                         path="/dashboard"
                         element={

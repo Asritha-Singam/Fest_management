@@ -1,5 +1,5 @@
 import { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { login as loginAPI } from "../services/authServices.js";
 import { AuthContext } from "../context/AuthContext.jsx";
 
@@ -10,6 +10,7 @@ const LoginForm = () => {
 
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,8 +22,12 @@ const LoginForm = () => {
 
       login(token, role);
 
+      // Check if redirecting from signup (new user onboarding)
+      const searchParams = new URLSearchParams(location.search);
+      const shouldOnboard = searchParams.get("onboarding") === "true";
+
       if (role === "participant") {
-        navigate("/dashboard");
+        navigate(shouldOnboard ? "/onboarding" : "/dashboard");
       } else if (role === "organizer") {
         navigate("/organizer/dashboard");
       } else if (role === "admin") {

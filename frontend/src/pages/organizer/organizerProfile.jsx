@@ -48,10 +48,18 @@ const OrganizerProfile = () => {
       <p><strong>Login Email:</strong> {profile.email}</p>
 
       <input
-        placeholder="Name"
-        defaultValue={profile.name}
+        placeholder="First Name"
+        defaultValue={profile.firstName}
         onChange={(e) =>
-          setEditData({ ...editData, name: e.target.value })
+          setEditData({ ...editData, firstName: e.target.value })
+        }
+      />
+
+      <input
+        placeholder="Last Name"
+        defaultValue={profile.lastName}
+        onChange={(e) =>
+          setEditData({ ...editData, lastName: e.target.value })
         }
       />
 

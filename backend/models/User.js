@@ -33,7 +33,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ["participant", "organizer", "admin"],
     default: "participant",
-    required: true
+    required: true,
+    immutable: true  // Prevent role changes after creation
   },
 
   // Organizer-specific fields

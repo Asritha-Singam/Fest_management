@@ -5,7 +5,8 @@ import {
   createOrganizerAdmin,
   getAllOrganizers,
   disableOrganizer,
-  deleteOrganizer
+  deleteOrganizer,
+  resetOrganizerPassword
 } from "../controllers/adminControllers.js";
 
 const router = express.Router();
@@ -16,6 +17,7 @@ router.use(authMiddleware, authorizeRoles("admin"));
 router.post("/organizers", createOrganizerAdmin);
 router.get("/organizers", getAllOrganizers);
 router.patch("/organizers/:id/disable", disableOrganizer);
+router.patch("/organizers/:id/reset-password", resetOrganizerPassword);
 router.delete("/organizers/:id", deleteOrganizer);
 
 export default router;

@@ -1,6 +1,22 @@
 import Event from "../models/events.js";
 import Participation from "../models/participation.js";
 import {Parser} from "json2csv";
+
+// Helper function to update event status to "ongoing" if date falls between start and end
+const updateEventStatusIfOngoing = async (event) => {
+  const now = new Date();
+  const startDate = new Date(event.eventStartDate);
+  const endDate = new Date(event.eventEndDate);
+  
+  // If event is published and current time is between start and end, mark as ongoing
+  if (event.status === "published" && now >= startDate && now <= endDate) {
+    event.status = "ongoing";
+    await event.save();
+  }
+  
+  return event;
+};
+
 export const createEvent = async (req, res) => {
   try {
     const {
@@ -68,7 +84,7 @@ export const getAllEvents = async (req, res) => {
   try {
     const { search, type, eligibility, startDate, endDate } = req.query;
 
-    let query = { status: "published" };
+    let query = { status: { $in: ["published", "ongoing"] } };
 
     // Filter by type
     if (type) {
@@ -90,6 +106,9 @@ export const getAllEvents = async (req, res) => {
 
     let events = await Event.find(query)
       .populate("organizer", "firstName lastName");
+
+    // Update status to ongoing if current date falls between start and end dates
+    events = await Promise.all(events.map(event => updateEventStatusIfOngoing(event)));
 
     // Search by event name (partial match)
     if (search) {
@@ -118,7 +137,11 @@ export const getAllEvents = async (req, res) => {
 
 export const getOrganizerEvents = async (req, res) => {
   try {
-    const events = await Event.find({ organizer: req.user.id });
+    let events = await Event.find({ organizer: req.user.id });
+    
+    // Update status to ongoing if current date falls between start and end dates
+    events = await Promise.all(events.map(event => updateEventStatusIfOngoing(event)));
+    
     res.status(200).json({
       success: true,
       count: events.length,

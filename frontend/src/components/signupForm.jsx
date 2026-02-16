@@ -29,8 +29,9 @@ const SignupForm = () => {
         setError("");
 
         try{
-            await register(formData);
-            navigate("/login");
+            const response = await register(formData);
+            // After successful registration, login and redirect to onboarding
+            navigate("/login?onboarding=true");
         }catch(err){
             setError(err.response?.data?.message || "Registration failed");
         }

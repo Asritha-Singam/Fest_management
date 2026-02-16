@@ -19,8 +19,24 @@ export const registerForEvent = async (req, res) => {
       return res.status(400).json({ success: false, message: "Registration deadline has passed" });
     }
 
-    if(event.registrationCount >= event.registrationLimit) {
-      return res.status(400).json({ success: false, message: "Event is full" });
+    // Check eligibility
+    const participant = await Participant.findOne({ userId });
+    if (!participant) {
+      return res.status(404).json({ success: false, message: "Participant not found" });
+    }
+
+    if (event.eligibility === "IIIT_ONLY" && participant.participantType !== "IIIT") {
+      return res.status(403).json({ success: false, message: "This event is only for IIIT participants" });
+    }
+
+    if (event.eligibility === "NON_IIIT_ONLY" && participant.participantType !== "NON_IIIT") {
+      return res.status(403).json({ success: false, message: "This event is only for non-IIIT participants" });
+    }
+
+    // Check registration limit by counting actual participants
+    const participantCount = await Participation.countDocuments({ event: eventId });
+    if (event.registrationLimit > 0 && participantCount >= event.registrationLimit) {
+      return res.status(400).json({ success: false, message: "Event registration limit reached" });
     }
 
     const existing=await Participation.findOne({ participant: userId, event: eventId });
@@ -128,12 +144,18 @@ export const getMyEvents = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
+    
+    // Prevent role switching
+    if (req.body.role) {
+      return res.status(403).json({ message: "Role cannot be changed" });
+    }
+
     const { firstName, lastName, contactNumber,collegeOROrg, interests, followedOrganizers } = req.body;
-    const user = await User.findByIdAndUpdate(userId, { firstName, lastName }, { new: true });
+    const user = await User.findByIdAndUpdate(userId, { firstName, lastName }, { returnDocument: 'after' });
     const participant = await Participant.findOneAndUpdate(
       { userId },
       { contactNumber, collegeOROrg, interests, followedOrganizers },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     res.status(200).json({
@@ -149,4 +171,125 @@ export const updateProfile = async (req, res) => {
       error: error.message
     });
   } 
+};
+
+// Get participant profile
+export const getProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    const user = await User.findById(userId).select("-password");
+    const participant = await Participant.findOne({ userId }).populate("followedOrganizers", "firstName lastName email");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      user,
+      participant
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching profile",
+      error: error.message
+    });
+  }
+};
+
+// Get all organizers (for follow feature)
+export const getAllOrganizers = async (req, res) => {
+  try {
+    const organizers = await User.find({ role: "organizer", isActive: true }).select("firstName lastName email category description");
+
+    res.status(200).json({
+      success: true,
+      organizers
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching organizers",
+      error: error.message
+    });
+  }
+};
+
+// Get recommended events based on participant preferences
+export const getRecommendedEvents = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Get participant with their preferences
+    const participant = await Participant.findOne({ userId });
+    
+    if (!participant) {
+      return res.status(404).json({ message: "Participant profile not found" });
+    }
+
+    const { interests, followedOrganizers } = participant;
+
+    // Get all published events
+    let events = await Event.find({ status: "published" })
+      .populate("organizer", "firstName lastName email");
+
+    // Score each event based on preferences
+    const scoredEvents = events.map(event => {
+      let score = 0;
+
+      // Match event tags with participant interests (case-insensitive)
+      if (interests && interests.length > 0 && event.eventTags && event.eventTags.length > 0) {
+        const matchedTags = event.eventTags.filter(tag => 
+          interests.some(interest => 
+            interest.toLowerCase().includes(tag.toLowerCase()) || 
+            tag.toLowerCase().includes(interest.toLowerCase())
+          )
+        );
+        score += matchedTags.length * 10; // 10 points per matched tag
+      }
+
+      // Boost score if event is from a followed organizer
+      if (followedOrganizers && followedOrganizers.length > 0) {
+        const isFollowedOrganizer = followedOrganizers.some(
+          orgId => orgId.toString() === event.organizer._id.toString()
+        );
+        if (isFollowedOrganizer) {
+          score += 50; // 50 bonus points for followed organizers
+        }
+      }
+
+      // Add recency bonus (newer events get slight boost)
+      const daysOld = (Date.now() - new Date(event.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+      if (daysOld < 7) {
+        score += 5; // 5 points for events created in last 7 days
+      }
+
+      return { ...event.toObject(), recommendationScore: score };
+    });
+
+    // Sort by score (highest first), then by event start date
+    scoredEvents.sort((a, b) => {
+      if (b.recommendationScore !== a.recommendationScore) {
+        return b.recommendationScore - a.recommendationScore;
+      }
+      return new Date(a.eventStartDate) - new Date(b.eventStartDate);
+    });
+
+    res.status(200).json({
+      success: true,
+      count: scoredEvents.length,
+      events: scoredEvents,
+      userInterests: interests,
+      followedOrganizersCount: followedOrganizers ? followedOrganizers.length : 0
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching recommended events",
+      error: error.message
+    });
+  }
 };

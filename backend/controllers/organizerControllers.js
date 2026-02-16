@@ -30,15 +30,22 @@ export const updateOrganizerProfile = async (req, res) => {
       return res.status(404).json({ message: "Organizer not found" });
     }
 
+    // Prevent role switching
+    if (req.body.role) {
+      return res.status(403).json({ message: "Role cannot be changed" });
+    }
+
     const {
-      name,
+      firstName,
+      lastName,
       category,
       description,
       contactEmail,
       contactNumber
     } = req.body;
 
-    if (name) organizer.name = name;
+    if (firstName) organizer.firstName = firstName;
+    if (lastName) organizer.lastName = lastName;
     if (category) organizer.category = category;
     if (description) organizer.description = description;
     if (contactEmail) organizer.contactEmail = contactEmail;

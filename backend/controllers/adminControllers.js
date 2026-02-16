@@ -64,6 +64,11 @@ export const disableOrganizer = async (req, res) => {
       return res.status(404).json({ message: "Organizer not found" });
     }
 
+    // Prevent role switching
+    if (req.body.role) {
+      return res.status(403).json({ message: "Role cannot be changed" });
+    }
+
     // Use isActive from request body, or toggle current status if not provided
     if (req.body.isActive !== undefined) {
       organizer.isActive = req.body.isActive;
@@ -99,5 +104,32 @@ export const deleteOrganizer = async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Reset organizer password (Admin only)
+export const resetOrganizerPassword = async (req, res) => {
+  try {
+    const organizer = await User.findById(req.params.id);
+
+    if (!organizer || organizer.role !== "organizer") {
+      return res.status(404).json({ message: "Organizer not found" });
+    }
+
+    // Generate new password
+    const newPassword = Math.random().toString(36).slice(-8);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    organizer.password = hashedPassword;
+    await organizer.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset successfully",
+      newPassword: newPassword
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };

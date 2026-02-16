@@ -67,6 +67,22 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleResetPassword = async (id, name) => {
+    if (window.confirm(`Are you sure you want to reset password for ${name}?`)) {
+      try {
+        const response = await api.patch(
+          `/admin/organizers/${id}/reset-password`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        alert(`Password reset successfully!\n\nNew Password: ${response.data.newPassword}\n\nPlease share this with the organizer.`);
+      } catch (err) {
+        console.error("Error resetting password:", err);
+        alert("Failed to reset password");
+      }
+    }
+  };
+
   if (loading) return <div style={{ padding: "20px" }}>Loading...</div>;
 
   return (
@@ -127,6 +143,13 @@ const AdminDashboard = () => {
                     }}
                   >
                     {organizer.isActive ? "Disable" : "Enable"}
+                  </button>
+
+                  <button
+                    onClick={() => handleResetPassword(organizer._id, `${organizer.firstName} ${organizer.lastName}`)}
+                    style={{ ...buttonStyle, backgroundColor: "#17a2b8" }}
+                  >
+                    Reset Password
                   </button>
 
                   <button
