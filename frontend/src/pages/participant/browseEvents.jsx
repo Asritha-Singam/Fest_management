@@ -1,18 +1,25 @@
 import { useEffect, useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../services/api";
 
 const BrowseEvents = () => {
     const { token } = useContext(AuthContext);
+    const navigate = useNavigate();
     const [events, setEvents] = useState([]);
     const [search, setSearch] = useState("");
     const [eventType, setEventType] = useState("");
-    const [viewMode, setViewMode] = useState("recommended"); // "recommended" or "all"
+    const [eligibilityFilter, setEligibilityFilter] = useState("");
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
+    const [showFollowedOnly, setShowFollowedOnly] = useState(false);
+    const [viewMode, setViewMode] = useState("recommended"); // "recommended" or "all" or "trending"
     const [userInterests, setUserInterests] = useState([]);
     const [registeredEvents, setRegisteredEvents] = useState(new Set());
     const [loading, setLoading] = useState(false);
     const [userParticipantType, setUserParticipantType] = useState("");
     const [eventParticipantCounts, setEventParticipantCounts] = useState({});
+    const [followedOrganizerIds, setFollowedOrganizerIds] = useState([]);
 
 
     useEffect(() => {
@@ -29,6 +36,9 @@ const BrowseEvents = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
         setUserParticipantType(response.data.participant?.participantType || "");
+        
+        const followed = response.data.participant?.followedOrganizers || [];
+        setFollowedOrganizerIds(followed.map(org => org._id || org));
       } catch (error) {
         console.error("Error fetching user profile", error);
       }
@@ -93,27 +103,57 @@ const BrowseEvents = () => {
       }
     };
 
-    const fetchAllEvents = async (searchQuery = "", type = "") => {
+    const fetchAllEvents = async (searchQuery = "", type = "", eligibility = "", dateStart = "", dateEnd = "") => {
       try {
-        const response = await fetch(
-          `http://localhost:5000/api/events/all?search=${searchQuery}&type=${type}`
-        );
+        let url = `http://localhost:5000/api/events/all?search=${searchQuery}&type=${type}`;
+        
+        if (eligibility) url += `&eligibility=${eligibility}`;
+        if (dateStart) url += `&startDate=${dateStart}`;
+        if (dateEnd) url += `&endDate=${dateEnd}`;
+
+        const response = await fetch(url);
         const data = await response.json();
-        setEvents(data.events || []);
+        let filteredEvents = data.events || [];
+
+        // Apply followed clubs filter if enabled
+        if (showFollowedOnly) {
+          filteredEvents = filteredEvents.filter(event => 
+            followedOrganizerIds.includes(event.organizer._id)
+          );
+        }
+
+        setEvents(filteredEvents);
         setViewMode("all");
         
         // Fetch participant counts for these events
-        if (data.events && data.events.length > 0) {
-          fetchParticipantCounts(data.events.map(e => e._id));
+        if (filteredEvents.length > 0) {
+          fetchParticipantCounts(filteredEvents.map(e => e._id));
         }
       } catch (error) {
         console.error("Error fetching events", error);
       }
     };
 
+    const fetchTrendingEvents = async () => {
+      try {
+        const response = await api.get("/events/trending", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setEvents(response.data.events || []);
+        setViewMode("trending");
+
+        if (response.data.events && response.data.events.length > 0) {
+          fetchParticipantCounts(response.data.events.map(e => e._id));
+        }
+      } catch (error) {
+        console.error("Error fetching trending events", error);
+        alert("Trending feature not yet implemented on backend");
+      }
+    };
+
 
     const handleSearch = () => {
-       fetchAllEvents(search, eventType);
+       fetchAllEvents(search, eventType, eligibilityFilter, startDate, endDate);
    };
 
    const handleRegister = async (eventId, eventName) => {
@@ -165,6 +205,16 @@ const BrowseEvents = () => {
               🎯 For You
             </button>
             <button
+              onClick={fetchTrendingEvents}
+              style={{
+                ...styles.toggleButton,
+                backgroundColor: viewMode === "trending" ? "#2E1A47" : "white",
+                color: viewMode === "trending" ? "white" : "#2E1A47"
+              }}
+            >
+              🔥 Trending (Top 5/24h)
+            </button>
+            <button
               onClick={() => fetchAllEvents()}
               style={{
                 ...styles.toggleButton,
@@ -191,39 +241,95 @@ const BrowseEvents = () => {
           )}
         </div>
 
-        {/* 🔍 Search Input */}
-        <div style={{ marginBottom: "20px" }}>
-          <input
-            type="text"
-            placeholder="Search events or organizers..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              padding: "10px",
-              width: "300px",
-              marginRight: "10px",
-              border: "1px solid #ddd",
-              borderRadius: "6px"
-            }}
-          />
+        {/* 🔍 Search and Filters */}
+        <div style={{ marginBottom: "20px", backgroundColor: "#f8f9fa", padding: "20px", borderRadius: "8px" }}>
+          <div style={{ display: "flex", gap: "10px", marginBottom: "15px", flexWrap: "wrap" }}>
+            <input
+              type="text"
+              placeholder="Search events or organizers..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                padding: "10px",
+                flex: "1",
+                minWidth: "250px",
+                border: "1px solid #ddd",
+                borderRadius: "6px"
+              }}
+            />
+            
             <select
-                value={eventType}
-                onChange={(e) => setEventType(e.target.value)}
-                style={{ 
-                  padding: "10px", 
-                  marginRight: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "6px"
-                }}
-                >
-                <option value="">All Types</option>
-                <option value="NORMAL">Normal</option>
-                <option value="MERCHANDISE">Merchandise</option>
+              value={eventType}
+              onChange={(e) => setEventType(e.target.value)}
+              style={{ 
+                padding: "10px", 
+                border: "1px solid #ddd",
+                borderRadius: "6px"
+              }}
+            >
+              <option value="">All Types</option>
+              <option value="NORMAL">Normal</option>
+              <option value="MERCHANDISE">Merchandise</option>
             </select>
 
-          <button onClick={handleSearch} style={styles.searchButton}>
-            Search
-          </button>
+            <select
+              value={eligibilityFilter}
+              onChange={(e) => setEligibilityFilter(e.target.value)}
+              style={{ 
+                padding: "10px", 
+                border: "1px solid #ddd",
+                borderRadius: "6px"
+              }}
+            >
+              <option value="">All Eligibility</option>
+              <option value="IIIT_ONLY">IIIT Only</option>
+              <option value="NON_IIIT_ONLY">Non-IIIT Only</option>
+              <option value="ALL">Open to All</option>
+            </select>
+
+            <button onClick={handleSearch} style={styles.searchButton}>
+              Search
+            </button>
+          </div>
+
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+            <label style={{ fontSize: "14px", fontWeight: "500" }}>Date Range:</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              style={{
+                padding: "8px",
+                border: "1px solid #ddd",
+                borderRadius: "6px"
+              }}
+            />
+            <span>to</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              style={{
+                padding: "8px",
+                border: "1px solid #ddd",
+                borderRadius: "6px"
+              }}
+            />
+
+            <label style={{ fontSize: "14px", fontWeight: "500", marginLeft: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
+              <input
+                type="checkbox"
+                checked={showFollowedOnly}
+                onChange={(e) => {
+                  setShowFollowedOnly(e.target.checked);
+                  if (viewMode === "all") {
+                    fetchAllEvents(search, eventType, eligibilityFilter, startDate, endDate);
+                  }
+                }}
+              />
+              Followed Clubs Only
+            </label>
+          </div>
         </div>
 
         {events.length === 0 ? (
@@ -263,10 +369,7 @@ const BrowseEvents = () => {
                       <strong>💰 Fee:</strong> ₹{event.registrationFee || 0}
                     </p>
                     <p style={{ fontSize: "13px", margin: "4px 0", color: "#444" }}>
-                      <strong>📝 Registered:</strong> {eventParticipantCounts[event._id] || 0} / {event.registrationLimit || "Unlimited"}
-                    </p>
-                    <p style={{ fontSize: "13px", margin: "4px 0", color: "#444" }}>
-                      <strong>👤 Eligibility:</strong> {event.eligibility === "IIIT_ONLY" ? "IIIT Only" : event.eligibility === "NON_IIIT_ONLY" ? "Non-IIIT Only" : "All"}
+                      <strong> Eligibility:</strong> {event.eligibility === "IIIT_ONLY" ? "IIIT Only" : event.eligibility === "NON_IIIT_ONLY" ? "Non-IIIT Only" : "All"}
                     </p>
                   </div>
 
@@ -305,20 +408,15 @@ const BrowseEvents = () => {
 
                     return (
                       <button
-                        onClick={() => handleRegister(event._id, event.eventName)}
-                        disabled={isDisabled}
+                        onClick={() => navigate(`/event/${event._id}`)}
                         style={{
                           ...styles.registerButton,
-                          backgroundColor: isRegistered 
-                            ? "#28a745" 
-                            : (isDeadlinePassed || isLimitReached || !isEligible)
-                            ? "#6c757d"
-                            : "#2E1A47",
-                          cursor: isDisabled ? "not-allowed" : "pointer",
-                          opacity: isDisabled ? 0.6 : 1
+                          backgroundColor: "#2E1A47",
+                          cursor: "pointer",
+                          opacity: 1
                         }}
                       >
-                        {buttonText}
+                        View Details
                       </button>
                     );
                   })()}

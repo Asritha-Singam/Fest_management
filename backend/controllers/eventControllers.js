@@ -102,6 +102,10 @@ export const getAllEvents = async (req, res) => {
         $gte: new Date(startDate),
         $lte: new Date(endDate)
       };
+    } else if (startDate) {
+      query.eventStartDate = { $gte: new Date(startDate) };
+    } else if (endDate) {
+      query.eventStartDate = { $lte: new Date(endDate) };
     }
 
     let events = await Event.find(query)
@@ -138,6 +142,32 @@ export const getAllEvents = async (req, res) => {
 export const getOrganizerEvents = async (req, res) => {
   try {
     let events = await Event.find({ organizer: req.user.id });
+    
+    // Update status to ongoing if current date falls between start and end dates
+    events = await Promise.all(events.map(event => updateEventStatusIfOngoing(event)));
+    
+    res.status(200).json({
+      success: true,
+      count: events.length,
+      events
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching organizer events",
+      error: error.message
+    });
+  }
+};
+
+export const getEventsByOrganizerId = async (req, res) => {
+  try {
+    const { organizerId } = req.params;
+
+    let events = await Event.find({ 
+      organizer: organizerId,
+      status: { $in: ["published", "ongoing", "completed"] }
+    }).populate("organizer", "firstName lastName");
     
     // Update status to ongoing if current date falls between start and end dates
     events = await Promise.all(events.map(event => updateEventStatusIfOngoing(event)));
@@ -335,6 +365,61 @@ export const updateEvent = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error updating event",
+      error: error.message
+    });
+  }
+};
+
+// Get Trending Events (Top 5 events by registrations in last 24 hours)
+export const getTrendingEvents = async (req, res) => {
+  try {
+    const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const trendingParticipations = await Participation.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: last24Hours }
+        }
+      },
+      {
+        $group: {
+          _id: "$event",
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { count: -1 }
+      },
+      {
+        $limit: 5
+      }
+    ]);
+
+    const eventIds = trendingParticipations.map(p => p._id);
+    
+    const events = await Event.find({
+      _id: { $in: eventIds },
+      status: { $in: ["published", "ongoing"] }
+    }).populate("organizer", "firstName lastName");
+
+    // Sort by registration count
+    const sortedEvents = events.map(event => {
+      const participation = trendingParticipations.find(p => p._id.toString() === event._id.toString());
+      return {
+        ...event.toObject(),
+        trendingScore: participation?.count || 0
+      };
+    }).sort((a, b) => b.trendingScore - a.trendingScore);
+
+    res.status(200).json({
+      success: true,
+      count: sortedEvents.length,
+      events: sortedEvents
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching trending events",
       error: error.message
     });
   }

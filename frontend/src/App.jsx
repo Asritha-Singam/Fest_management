@@ -11,6 +11,9 @@ import Dashboard from "./pages/participant/dashboard";
 import TicketPage from "./pages/participant/ticketPage";
 import Profile from "./pages/participant/profile";
 import Onboarding from "./pages/participant/onboarding";
+import OrganizersList from "./pages/participant/organizersList";
+import OrganizerDetail from "./pages/participant/organizerDetail";
+import EventDetail from "./pages/participant/eventDetail";
 import Navbar from "./components/participantNavbar";
 import OrganizerDashboard from "./pages/organizer/organizerDashboard";
 import OrganizerEventDetail from "./pages/organizer/organizerEventDetail";
@@ -77,6 +80,30 @@ function AppContent() {
                         element={
                             <ProtectedRoute allowedRoles={["participant"]}>
                                 <Profile />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/organizers"
+                        element={
+                            <ProtectedRoute allowedRoles={["participant"]}>
+                                <OrganizersList />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/organizer/:id"
+                        element={
+                            <ProtectedRoute allowedRoles={["participant"]}>
+                                <OrganizerDetail />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/event/:id"
+                        element={
+                            <ProtectedRoute allowedRoles={["participant"]}>
+                                <EventDetail />
                             </ProtectedRoute>
                         }
                     />

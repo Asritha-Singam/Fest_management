@@ -18,6 +18,7 @@ const ParticipantNavbar = () => {
       <div style={styles.links}>
         <Link to="/dashboard">Dashboard</Link>
         <Link to="/browse">Browse Events</Link>
+        <Link to="/organizers">Clubs/Organizers</Link>
         <Link to="/profile">Profile</Link>
         <button onClick={handleLogout} style={styles.logoutButton}>Logout</button>
       </div>

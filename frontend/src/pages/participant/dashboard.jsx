@@ -1,93 +1,237 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
+import api from "../../services/api";
 
 const Dashboard = () => {
+  const { token } = useContext(AuthContext);
   const [events, setEvents] = useState({
     upcoming: [],
     completed: [],
     cancelled: []
   });
 
-  const [activeTab, setActiveTab] = useState("completed");
+  const [activeTab, setActiveTab] = useState("normal");
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchEvents = async () => {
-      const token = localStorage.getItem("token");
+      if (!token) return;
 
-      const res = await fetch(
-        "http://localhost:5000/api/participants/my-events",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+      try {
+        const res = await api.get("/participants/my-events", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (res.data.success) {
+          setEvents(res.data);
         }
-      );
-
-      const data = await res.json();
-      if (data.success) {
-        setEvents(data);
+      } catch (error) {
+        console.error("Error fetching events", error);
       }
     };
 
     fetchEvents();
-  }, []);
+  }, [token]);
+
+  const categorizeEvents = (eventList) => {
+    const normal = eventList.filter(p => p.event.eventType === "NORMAL");
+    const merchandise = eventList.filter(p => p.event.eventType === "MERCHANDISE");
+    return { normal, merchandise };
+  };
+
+  const renderEventCard = (participation) => (
+    <div key={participation._id} style={cardStyle}>
+      <h3 style={{ marginTop: 0 }}>{participation.event.eventName}</h3>
+      
+      <div style={{ fontSize: "14px", color: "#666", marginBottom: "15px" }}>
+        <p style={{ margin: "5px 0" }}>
+          <strong>Type:</strong> {participation.event.eventType}
+        </p>
+        <p style={{ margin: "5px 0" }}>
+          <strong>Organizer:</strong> {participation.event.organizer?.firstName} {participation.event.organizer?.lastName}
+        </p>
+        <p style={{ margin: "5px 0" }}>
+          <strong>Date:</strong> {new Date(participation.event.eventStartDate).toLocaleDateString()} - {new Date(participation.event.eventEndDate).toLocaleDateString()}
+        </p>
+        <p style={{ margin: "5px 0" }}>
+          <strong>Ticket ID:</strong> {participation.ticketId}
+        </p>
+        {participation.teamName && (
+          <p style={{ margin: "5px 0" }}>
+            <strong>Team:</strong> {participation.teamName}
+          </p>
+        )}
+      </div>
+
+      <button
+        onClick={() => navigate(`/ticket/${participation._id}`, { state: participation })}
+        style={viewTicketButton}
+      >
+        View Ticket
+      </button>
+    </div>
+  );
 
   const renderHistory = () => {
     let list = [];
 
-    if (activeTab === "completed") list = events.completed;
-    if (activeTab === "cancelled") list = events.cancelled;
+    if (activeTab === "normal") {
+      list = [...events.completed, ...events.cancelled].filter(p => p.event.eventType === "NORMAL");
+    } else if (activeTab === "merchandise") {
+      list = [...events.completed, ...events.cancelled].filter(p => p.event.eventType === "MERCHANDISE");
+    } else if (activeTab === "completed") {
+      list = events.completed;
+    } else if (activeTab === "cancelled") {
+      list = events.cancelled;
+    }
 
-    if (list.length === 0) return <p>No events</p>;
+    if (list.length === 0) return <p style={{ textAlign: "center", padding: "20px", color: "#666" }}>No events in this category</p>;
 
-    return list.map((p) => (
-      <div key={p._id}>
-        <strong>{p.event.eventName}</strong>
+    return (
+      <div style={gridStyle}>
+        {list.map((p) => (
+          <div key={p._id} style={cardStyle}>
+            <h4 style={{ marginTop: 0 }}>{p.event.eventName}</h4>
+            <p style={{ fontSize: "13px", color: "#666" }}>
+              Type: {p.event.eventType}
+            </p>
+            <p style={{ fontSize: "13px", color: "#666" }}>
+              Status: <span style={{ 
+                color: p.status === "Cancelled" ? "#dc3545" : "#28a745",
+                fontWeight: "500"
+              }}>{p.status}</span>
+            </p>
+            <p style={{ fontSize: "13px", color: "#666" }}>
+              Ticket ID: {p.ticketId}
+            </p>
+          </div>
+        ))}
       </div>
-    ));
+    );
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>My Events Dashboard</h1>
+    <>
+      <div style={{ padding: "30px" }}>
+        <h1>My Events Dashboard</h1>
 
-      {/* Upcoming Section */}
-      <h2>Upcoming Events</h2>
-      {events.upcoming.length === 0 ? (
-        <p>No upcoming events</p>
-      ) : (
-        events.upcoming.map((p) => (
-          <div key={p._id} style={{ marginBottom: "15px" }}>
-            <h3>{p.event.eventName}</h3>
-            <p>Type: {p.event.eventType}</p>
-            <p>Ticket ID: {p.ticketId}</p>
-            <button
-              onClick={() =>
-                navigate(`/ticket/${p._id}`, { state: p })
-              }
+        {/* Upcoming Section */}
+        <section style={{ marginBottom: "40px" }}>
+          <h2 style={{ borderBottom: "2px solid #2E1A47", paddingBottom: "10px" }}>
+            Upcoming Events
+          </h2>
+          {events.upcoming.length === 0 ? (
+            <p style={{ textAlign: "center", padding: "40px", backgroundColor: "#f8f9fa", borderRadius: "8px", color: "#666" }}>
+              No upcoming events. <a href="/browse" style={{ color: "#2E1A47" }}>Browse events</a> to register!
+            </p>
+          ) : (
+            <div style={gridStyle}>
+              {events.upcoming.map(renderEventCard)}
+            </div>
+          )}
+        </section>
+
+        {/* History Tabs */}
+        <section>
+          <h2 style={{ borderBottom: "2px solid #2E1A47", paddingBottom: "10px" }}>
+            Participation History
+          </h2>
+
+          <div style={tabContainer}>
+            <button 
+              onClick={() => setActiveTab("normal")}
+              style={{
+                ...tabButton,
+                backgroundColor: activeTab === "normal" ? "#2E1A47" : "white",
+                color: activeTab === "normal" ? "white" : "#2E1A47"
+              }}
             >
-              View Ticket
+              Normal Events
+            </button>
+            <button 
+              onClick={() => setActiveTab("merchandise")}
+              style={{
+                ...tabButton,
+                backgroundColor: activeTab === "merchandise" ? "#2E1A47" : "white",
+                color: activeTab === "merchandise" ? "white" : "#2E1A47"
+              }}
+            >
+              Merchandise
+            </button>
+            <button 
+              onClick={() => setActiveTab("completed")}
+              style={{
+                ...tabButton,
+                backgroundColor: activeTab === "completed" ? "#2E1A47" : "white",
+                color: activeTab === "completed" ? "white" : "#2E1A47"
+              }}
+            >
+              Completed
+            </button>
+            <button 
+              onClick={() => setActiveTab("cancelled")}
+              style={{
+                ...tabButton,
+                backgroundColor: activeTab === "cancelled" ? "#2E1A47" : "white",
+                color: activeTab === "cancelled" ? "white" : "#2E1A47"
+              }}
+            >
+              Cancelled/Rejected
             </button>
           </div>
-        ))
-      )}
 
-      {/* History Tabs */}
-      <h2>Participation History</h2>
-
-      <div>
-        <button onClick={() => setActiveTab("completed")}>
-          Completed
-        </button>
-        <button onClick={() => setActiveTab("cancelled")}>
-          Cancelled
-        </button>
+          <div style={{ marginTop: "20px" }}>
+            {renderHistory()}
+          </div>
+        </section>
       </div>
-
-      {renderHistory()}
-    </div>
+    </>
   );
+};
+
+const gridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+  gap: "20px",
+  marginTop: "20px"
+};
+
+const cardStyle = {
+  border: "1px solid #ddd",
+  padding: "20px",
+  borderRadius: "8px",
+  backgroundColor: "white",
+  boxShadow: "0 2px 4px rgba(0,0,0,0.05)"
+};
+
+const viewTicketButton = {
+  width: "100%",
+  padding: "10px",
+  backgroundColor: "#2E1A47",
+  color: "white",
+  border: "none",
+  borderRadius: "6px",
+  cursor: "pointer",
+  fontSize: "14px",
+  fontWeight: "500"
+};
+
+const tabContainer = {
+  display: "flex",
+  gap: "10px",
+  marginTop: "20px",
+  flexWrap: "wrap"
+};
+
+const tabButton = {
+  padding: "10px 20px",
+  border: "2px solid #2E1A47",
+  borderRadius: "6px",
+  cursor: "pointer",
+  fontSize: "14px",
+  fontWeight: "500",
+  transition: "all 0.2s"
 };
 
 export default Dashboard;

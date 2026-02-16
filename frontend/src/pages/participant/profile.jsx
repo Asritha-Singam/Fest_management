@@ -32,6 +32,14 @@ const Profile = () => {
   const [followedOrganizers, setFollowedOrganizers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showFollowSection, setShowFollowSection] = useState(false);
+  
+  // Password change state
+  const [showPasswordSection, setShowPasswordSection] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
 
   useEffect(() => {
     if (token) {
@@ -132,6 +140,43 @@ const Profile = () => {
     } catch (error) {
       console.error("Error updating profile:", error);
       alert("Failed to update profile");
+    }
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      alert("New passwords do not match");
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+      alert("New password must be at least 6 characters");
+      return;
+    }
+
+    try {
+      await api.post(
+        "/participants/change-password",
+        {
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      alert("Password changed successfully!");
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setShowPasswordSection(false);
+    } catch (error) {
+      console.error("Error changing password:", error);
+      const errorMsg = error.response?.data?.message || "Failed to change password";
+      alert(errorMsg);
     }
   };
 
@@ -283,6 +328,65 @@ const Profile = () => {
           Save Changes
         </button>
       </form>
+
+      {/* Password Change Section */}
+      <div style={{ ...styles.section, marginTop: "30px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+          <h2 style={styles.sectionTitle}>Security Settings</h2>
+          <button
+            type="button"
+            onClick={() => setShowPasswordSection(!showPasswordSection)}
+            style={styles.toggleButton}
+          >
+            {showPasswordSection ? "Cancel" : "Change Password"}
+          </button>
+        </div>
+
+        {showPasswordSection && (
+          <form onSubmit={handlePasswordChange} style={{ backgroundColor: "#f8f9fa", padding: "20px", borderRadius: "8px" }}>
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Current Password *</label>
+              <input
+                type="password"
+                placeholder="Enter current password"
+                value={passwordForm.currentPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                style={styles.input}
+                required
+              />
+            </div>
+
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>New Password * (min 6 characters)</label>
+              <input
+                type="password"
+                placeholder="Enter new password"
+                value={passwordForm.newPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                style={styles.input}
+                required
+                minLength={6}
+              />
+            </div>
+
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Confirm New Password *</label>
+              <input
+                type="password"
+                placeholder="Confirm new password"
+                value={passwordForm.confirmPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                style={styles.input}
+                required
+              />
+            </div>
+
+            <button type="submit" style={{ ...styles.saveButton, marginTop: "15px", backgroundColor: "#dc3545" }}>
+              Update Password
+            </button>
+          </form>
+        )}
+      </div>
     </div>
   );
 };
