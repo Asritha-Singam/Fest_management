@@ -14,6 +14,14 @@ const EventDetail = () => {
   const [participantCount, setParticipantCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
+  const [showRegistrationForm, setShowRegistrationForm] = useState(false);
+
+  // Form data for merchandise or custom fields
+  const [merchandiseSelection, setMerchandiseSelection] = useState({
+    size: "",
+    color: ""
+  });
+  const [customFieldResponses, setCustomFieldResponses] = useState([]);
 
   useEffect(() => {
     if (token && id) {
@@ -70,19 +78,32 @@ const EventDetail = () => {
   const handleRegister = async () => {
     if (registering) return;
 
+    // For merchandise or events with custom fields, show the form first
+    if ((event.eventType === "MERCHANDISE") || 
+        (event.eventType === "NORMAL" && event.customFormFields?.length > 0)) {
+      setShowRegistrationForm(true);
+      return;
+    }
+
+    // For simple events without additional info needed
     const confirmMsg = `Do you want to register for "${event.eventName}"?`;
     if (!window.confirm(confirmMsg)) return;
 
+    await submitRegistration({});
+  };
+
+  const submitRegistration = async (registrationData) => {
     setRegistering(true);
     try {
       const response = await api.post(
         `/participants/register/${id}`,
-        {},
+        registrationData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       alert(`✅ Successfully registered for ${event.eventName}!\nTicket ID: ${response.data.ticketId}`);
       setIsRegistered(true);
+      setShowRegistrationForm(false);
       await checkRegistrationStatus();
     } catch (error) {
       console.error("Registration error:", error);
@@ -91,6 +112,47 @@ const EventDetail = () => {
     } finally {
       setRegistering(false);
     }
+  };
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+
+    // Validate merchandise selection
+    if (event.eventType === "MERCHANDISE") {
+      if (!merchandiseSelection.size || !merchandiseSelection.color) {
+        alert("Please select both size and color");
+        return;
+      }
+      submitRegistration({ merchandiseSelection });
+    }
+
+    // Validate custom fields
+    if (event.eventType === "NORMAL" && event.customFormFields?.length > 0) {
+      // Check required fields
+      for (const field of event.customFormFields) {
+        if (field.required) {
+          const response = customFieldResponses.find(r => r.fieldName === field.fieldName);
+          if (!response || !response.fieldValue) {
+            alert(`${field.fieldName} is required`);
+            return;
+          }
+        }
+      }
+      submitRegistration({ customFieldResponses });
+    }
+  };
+
+  const handleCustomFieldChange = (fieldName, value) => {
+    setCustomFieldResponses(prev => {
+      const existing = prev.find(r => r.fieldName === fieldName);
+      if (existing) {
+        return prev.map(r => 
+          r.fieldName === fieldName ? { ...r, fieldValue: value } : r
+        );
+      } else {
+        return [...prev, { fieldName, fieldValue: value }];
+      }
+    });
   };
 
   if (loading) return <div style={{ padding: "30px" }}>Loading...</div>;
@@ -125,9 +187,21 @@ const EventDetail = () => {
             <span style={typeBadge}>{event.eventType}</span>
           </div>
 
-          <p style={{ fontSize: "16px", color: "#555", lineHeight: "1.6", marginBottom: "30px" }}>
-            {event.eventDescription}
-          </p>
+          {/* Description Section - More Prominent */}
+          {event.eventDescription && (
+            <div style={{ 
+              backgroundColor: "#f8f9fa", 
+              padding: "20px", 
+              borderRadius: "8px", 
+              marginBottom: "30px",
+              borderLeft: "4px solid #2E1A47"
+            }}>
+              <h3 style={{ marginTop: 0, marginBottom: "10px", color: "#2E1A47" }}>About This Event</h3>
+              <p style={{ fontSize: "16px", color: "#333", lineHeight: "1.8", margin: 0 }}>
+                {event.eventDescription}
+              </p>
+            </div>
+          )}
 
           <div style={infoGrid}>
             <div style={infoItem}>
@@ -227,6 +301,103 @@ const EventDetail = () => {
             </button>
           </div>
         </div>
+
+        {/* Registration Form Modal */}
+        {showRegistrationForm && (
+          <div style={modalOverlay}>
+            <div style={modalContent}>
+              <h2>Complete Your Registration</h2>
+              <form onSubmit={handleFormSubmit}>
+                
+                {/* Merchandise Selection */}
+                {event.eventType === "MERCHANDISE" && (
+                  <>
+                    {event.merchandiseDetails?.sizes?.length > 0 && (
+                      <div style={formGroup}>
+                        <label style={label}>Select Size *</label>
+                        <select
+                          value={merchandiseSelection.size}
+                          onChange={(e) => setMerchandiseSelection({
+                            ...merchandiseSelection,
+                            size: e.target.value
+                          })}
+                          style={selectInput}
+                          required
+                        >
+                          <option value="">-- Select Size --</option>
+                          {event.merchandiseDetails.sizes.map((size) => (
+                            <option key={size} value={size}>{size}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {event.merchandiseDetails?.colors?.length > 0 && (
+                      <div style={formGroup}>
+                        <label style={label}>Select Color *</label>
+                        <select
+                          value={merchandiseSelection.color}
+                          onChange={(e) => setMerchandiseSelection({
+                            ...merchandiseSelection,
+                            color: e.target.value
+                          })}
+                          style={selectInput}
+                          required
+                        >
+                          <option value="">-- Select Color --</option>
+                          {event.merchandiseDetails.colors.map((color) => (
+                            <option key={color} value={color}>{color}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Custom Form Fields */}
+                {event.eventType === "NORMAL" && event.customFormFields?.map((field, idx) => (
+                  <div key={idx} style={formGroup}>
+                    <label style={label}>
+                      {field.fieldName} {field.required && "*"}
+                    </label>
+                    <input
+                      type={field.fieldType || "text"}
+                      required={field.required}
+                      onChange={(e) => handleCustomFieldChange(field.fieldName, e.target.value)}
+                      style={textInput}
+                      placeholder={`Enter ${field.fieldName}`}
+                    />
+                  </div>
+                ))}
+
+                <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
+                  <button
+                    type="submit"
+                    disabled={registering}
+                    style={{
+                      ...formButton,
+                      backgroundColor: "#2E1A47",
+                      opacity: registering ? 0.6 : 1
+                    }}
+                  >
+                    {registering ? "Submitting..." : "Submit Registration"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowRegistrationForm(false)}
+                    disabled={registering}
+                    style={{
+                      ...formButton,
+                      backgroundColor: "#6c757d"
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
@@ -290,6 +461,69 @@ const registerButton = {
   fontSize: "16px",
   fontWeight: "600",
   minWidth: "200px"
+};
+
+const modalOverlay = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: "rgba(0, 0, 0, 0.6)",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 1000
+};
+
+const modalContent = {
+  backgroundColor: "white",
+  padding: "30px",
+  borderRadius: "12px",
+  maxWidth: "500px",
+  width: "90%",
+  maxHeight: "80vh",
+  overflowY: "auto",
+  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)"
+};
+
+const formGroup = {
+  marginBottom: "20px"
+};
+
+const label = {
+  display: "block",
+  marginBottom: "8px",
+  fontWeight: "500",
+  color: "#333"
+};
+
+const selectInput = {
+  width: "100%",
+  padding: "10px",
+  fontSize: "14px",
+  border: "1px solid #ddd",
+  borderRadius: "6px",
+  backgroundColor: "white"
+};
+
+const textInput = {
+  width: "100%",
+  padding: "10px",
+  fontSize: "14px",
+  border: "1px solid #ddd",
+  borderRadius: "6px"
+};
+
+const formButton = {
+  flex: 1,
+  padding: "12px 20px",
+  border: "none",
+  borderRadius: "6px",
+  color: "white",
+  fontSize: "14px",
+  fontWeight: "600",
+  cursor: "pointer"
 };
 
 export default EventDetail;

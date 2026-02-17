@@ -12,6 +12,7 @@ const Dashboard = () => {
   });
 
   const [activeTab, setActiveTab] = useState("normal");
+  const [cancellingId, setCancellingId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,6 +34,35 @@ const Dashboard = () => {
 
     fetchEvents();
   }, [token]);
+
+  const handleCancelRegistration = async (participationId) => {
+    if (!window.confirm("Are you sure you want to cancel this registration?")) {
+      return;
+    }
+
+    setCancellingId(participationId);
+    try {
+      const res = await api.delete(`/participants/cancel-registration/${participationId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.data.success) {
+        alert("Registration cancelled successfully");
+        // Refresh the events list
+        const refreshRes = await api.get("/participants/my-events", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (refreshRes.data.success) {
+          setEvents(refreshRes.data);
+        }
+      }
+    } catch (error) {
+      console.error("Error cancelling registration", error);
+      alert(error.response?.data?.message || "Failed to cancel registration");
+    } finally {
+      setCancellingId(null);
+    }
+  };
 
   const categorizeEvents = (eventList) => {
     const normal = eventList.filter(p => p.event.eventType === "NORMAL");
@@ -64,12 +94,25 @@ const Dashboard = () => {
         )}
       </div>
 
-      <button
-        onClick={() => navigate(`/ticket/${participation._id}`, { state: participation })}
-        style={viewTicketButton}
-      >
-        View Ticket
-      </button>
+      <div style={{ display: "flex", gap: "10px" }}>
+        <button
+          onClick={() => navigate(`/ticket/${participation._id}`, { state: participation })}
+          style={viewTicketButton}
+        >
+          View Ticket
+        </button>
+        <button
+          onClick={() => handleCancelRegistration(participation._id)}
+          disabled={cancellingId === participation._id}
+          style={{
+            ...cancelButton,
+            opacity: cancellingId === participation._id ? 0.6 : 1,
+            cursor: cancellingId === participation._id ? "not-allowed" : "pointer"
+          }}
+        >
+          {cancellingId === participation._id ? "Cancelling..." : "Cancel"}
+        </button>
+      </div>
     </div>
   );
 
@@ -206,7 +249,7 @@ const cardStyle = {
 };
 
 const viewTicketButton = {
-  width: "100%",
+  flex: 1,
   padding: "10px",
   backgroundColor: "#2E1A47",
   color: "white",
@@ -215,6 +258,19 @@ const viewTicketButton = {
   cursor: "pointer",
   fontSize: "14px",
   fontWeight: "500"
+};
+
+const cancelButton = {
+  flex: 1,
+  padding: "10px",
+  backgroundColor: "#dc3545",
+  color: "white",
+  border: "none",
+  borderRadius: "6px",
+  cursor: "pointer",
+  fontSize: "14px",
+  fontWeight: "500",
+  transition: "all 0.2s"
 };
 
 const tabContainer = {

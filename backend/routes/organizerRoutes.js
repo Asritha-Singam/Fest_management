@@ -1,7 +1,7 @@
 import express from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
 import authorizeRoles from "../middleware/roleMiddleware.js";
-import { createEvent, getEventParticipants, getOrganizerEvents, publishEvent, getEventAnalytics, exportParticipantsCSV, updateEvent } from "../controllers/eventControllers.js"; 
+import { createEvent, getEventParticipants, getOrganizerEvents, publishEvent, getEventAnalytics, exportParticipantsCSV, updateEvent, getDashboardAnalytics } from "../controllers/eventControllers.js"; 
 import { getOrganizerProfile, updateOrganizerProfile } from "../controllers/organizerControllers.js";
 const router = express.Router();
 
@@ -26,6 +26,9 @@ router.get("/events/:eventId/participants", getEventParticipants);
 
 //get event analytics (GET /api/organizer/events/:eventId/analytics)
 router.get("/events/:eventId/analytics", getEventAnalytics);
+
+//get dashboard analytics for all completed events (GET /api/organizer/dashboard/analytics)
+router.get("/dashboard/analytics", getDashboardAnalytics);
 
 //export event data as CSV (GET /api/organizer/events/:eventId/export)
 router.get("/events/:eventId/export", exportParticipantsCSV);

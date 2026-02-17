@@ -10,6 +10,7 @@ export const registerForEvent = async (req, res) => {
   try {
     const userId = req.user.id; // from JWT middleware
     const { eventId } = req.params;
+    const { merchandiseSelection, customFieldResponses } = req.body;
 
     const event = await Event.findById(eventId);
     if (!event) {
@@ -34,6 +35,48 @@ export const registerForEvent = async (req, res) => {
       return res.status(403).json({ success: false, message: "This event is only for non-IIIT participants" });
     }
 
+    // Validate merchandise selection for MERCHANDISE events
+    if (event.eventType === "MERCHANDISE") {
+      if (!merchandiseSelection || !merchandiseSelection.size || !merchandiseSelection.color) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Please select size and color for merchandise" 
+        });
+      }
+
+      // Validate size and color are in available options
+      if (event.merchandiseDetails?.sizes?.length > 0 && 
+          !event.merchandiseDetails.sizes.includes(merchandiseSelection.size)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invalid size selection" 
+        });
+      }
+
+      if (event.merchandiseDetails?.colors?.length > 0 && 
+          !event.merchandiseDetails.colors.includes(merchandiseSelection.color)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invalid color selection" 
+        });
+      }
+    }
+
+    // Validate custom form fields for NORMAL events
+    if (event.eventType === "NORMAL" && event.customFormFields?.length > 0) {
+      for (const field of event.customFormFields) {
+        if (field.required) {
+          const response = customFieldResponses?.find(r => r.fieldName === field.fieldName);
+          if (!response || !response.fieldValue) {
+            return res.status(400).json({ 
+              success: false, 
+              message: `${field.fieldName} is required` 
+            });
+          }
+        }
+      }
+    }
+
     // Check registration limit by counting actual participants
     const participantCount = await Participation.countDocuments({ event: eventId });
     if (event.registrationLimit > 0 && participantCount >= event.registrationLimit) {
@@ -47,11 +90,23 @@ export const registerForEvent = async (req, res) => {
     const random=Math.floor(100000 + Math.random() * 900000);
     const ticketId=`FEL-${eventId.toString().slice(-6)}-${random}`;
 
-    const participation = new Participation({
+    const participationData = {
       participant: userId,
       event: eventId,
       ticketId,
-    });
+    };
+
+    // Add merchandise selection if applicable
+    if (event.eventType === "MERCHANDISE" && merchandiseSelection) {
+      participationData.merchandiseSelection = merchandiseSelection;
+    }
+
+    // Add custom field responses if applicable
+    if (event.eventType === "NORMAL" && customFieldResponses) {
+      participationData.customFieldResponses = customFieldResponses;
+    }
+
+    const participation = new Participation(participationData);
     await participation.save();
     event.registrationCount = (event.registrationCount || 0) + 1;
 
@@ -64,6 +119,19 @@ export const registerForEvent = async (req, res) => {
       const qrCodeData = `Ticket ID: ${ticketId}`;
       const qrCodeBuffer = await QRCode.toBuffer(qrCodeData);
 
+      // Build email content with merchandise/custom field details
+      let additionalInfo = "";
+      if (merchandiseSelection) {
+        additionalInfo += `<p><strong>Size:</strong> ${merchandiseSelection.size}</p>`;
+        additionalInfo += `<p><strong>Color:</strong> ${merchandiseSelection.color}</p>`;
+      }
+      if (customFieldResponses && customFieldResponses.length > 0) {
+        additionalInfo += "<h3>Registration Details:</h3>";
+        customFieldResponses.forEach(field => {
+          additionalInfo += `<p><strong>${field.fieldName}:</strong> ${field.fieldValue}</p>`;
+        });
+      }
+
       await sendEmail(
         user.email, 
         "Event Registration Confirmation", 
@@ -73,6 +141,7 @@ export const registerForEvent = async (req, res) => {
           <p>You have successfully registered for the event: <strong>${event.eventName}</strong></p>
           <p><strong>Ticket ID:</strong> ${ticketId}</p>
           <p><strong>Event Date:</strong> ${new Date(event.eventStartDate).toLocaleDateString()}</p>
+          ${additionalInfo}
           <p>Please find your QR code below:</p>
           <img src="cid:qrcode" alt="Event QR Code" style="width:200px; height:200px;" />
           <p>Show this QR code at the event entrance.</p>
@@ -103,6 +172,92 @@ export const registerForEvent = async (req, res) => {
     });
   }
 };
+
+export const cancelRegistration = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { participationId } = req.params;
+
+    // Find the participation record
+    const participation = await Participation.findById(participationId).populate('event');
+    
+    if (!participation) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Registration not found" 
+      });
+    }
+
+    // Check if the participation belongs to the requesting user
+    if (participation.participant.toString() !== userId) {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Unauthorized to cancel this registration" 
+      });
+    }
+
+    // Check if already cancelled
+    if (participation.status === "Cancelled") {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Registration is already cancelled" 
+      });
+    }
+
+    // Check if event has already started or completed
+    const event = participation.event;
+    const now = new Date();
+    
+    if (new Date(event.eventStartDate) <= now) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Cannot cancel registration for events that have already started or completed" 
+      });
+    }
+
+    // Update participation status to Cancelled
+    participation.status = "Cancelled";
+    await participation.save();
+
+    // Decrease the registration count on the event
+    if (event.registrationCount > 0) {
+      event.registrationCount -= 1;
+      await event.save();
+    }
+
+    // Try sending cancellation email (don't fail if email fails)
+    try {
+      const user = await User.findById(userId);
+      await sendEmail(
+        user.email,
+        "Event Registration Cancelled",
+        `
+          <h2>Event Registration Cancellation</h2>
+          <p>Hello ${user.firstName} ${user.lastName},</p>
+          <p>Your registration for the event: <strong>${event.eventName}</strong> has been cancelled.</p>
+          <p><strong>Ticket ID:</strong> ${participation.ticketId}</p>
+          <p>If this was a mistake, you can register again if spots are still available.</p>
+        `
+      );
+    } catch (emailError) {
+      console.error("Failed to send cancellation email:", emailError.message);
+      // Continue anyway - cancellation was successful
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Registration cancelled successfully"
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error cancelling registration",
+      error: error.message
+    });
+  }
+};
+
 export const getMyEvents = async (req, res) => {
   try {
     const userId = req.user.id;

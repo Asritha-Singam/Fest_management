@@ -1,5 +1,5 @@
 import express from 'express';
-import {registerForEvent,getMyEvents, getProfile, getAllOrganizers, getRecommendedEvents, changePassword} from '../controllers/participantControllers.js';
+import {registerForEvent,getMyEvents, getProfile, getAllOrganizers, getRecommendedEvents, changePassword, cancelRegistration} from '../controllers/participantControllers.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 import authorizeRoles from '../middleware/roleMiddleware.js';
 import { updateProfile } from '../controllers/participantControllers.js';
@@ -9,6 +9,7 @@ const router = express.Router();
 router.use(authMiddleware, authorizeRoles("participant"));
 
 router.post("/register/:eventId", registerForEvent);
+router.delete("/cancel-registration/:participationId", cancelRegistration);
 router.get("/my-events", getMyEvents);
 router.get("/recommended-events", getRecommendedEvents);
 router.get("/profile", getProfile);

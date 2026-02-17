@@ -146,10 +146,22 @@ export const getOrganizerEvents = async (req, res) => {
     // Update status to ongoing if current date falls between start and end dates
     events = await Promise.all(events.map(event => updateEventStatusIfOngoing(event)));
     
+    // Add actual registration count for each event
+    const eventsWithCount = await Promise.all(events.map(async (event) => {
+      const participants = await Participation.find({ event: event._id });
+      const totalRegistrations = participants.length;
+      
+      // Convert to plain object and add registrationCount
+      const eventObj = event.toObject();
+      eventObj.registrationCount = totalRegistrations;
+      
+      return eventObj;
+    }));
+    
     res.status(200).json({
       success: true,
-      count: events.length,
-      events
+      count: eventsWithCount.length,
+      events: eventsWithCount
     });
   } catch (error) {
     res.status(500).json({
@@ -274,6 +286,87 @@ export const getEventAnalytics = async (req, res) => {
   }
 };
 
+// Get dashboard-level analytics for all completed events
+export const getDashboardAnalytics = async (req, res) => {
+  try {
+    const organizerId = req.user.id;
+    
+    // Get all completed events by this organizer
+    const completedEvents = await Event.find({ 
+      organizer: organizerId, 
+      status: "completed" 
+    });
+
+    if (completedEvents.length === 0) {
+      return res.status(200).json({
+        success: true,
+        analytics: {
+          totalCompletedEvents: 0,
+          totalRegistrations: 0,
+          totalRevenue: 0,
+          totalAttendance: 0,
+          eventBreakdown: []
+        }
+      });
+    }
+
+    const eventIds = completedEvents.map(e => e._id);
+    
+    // Get all participations for these events
+    const participations = await Participation.find({
+      event: { $in: eventIds }
+    }).populate('event', 'eventName registrationFee eventType');
+
+    // Calculate aggregate stats
+    let totalRegistrations = 0;
+    let totalRevenue = 0;
+    let totalAttendance = 0;
+    const eventBreakdown = [];
+
+    for (const event of completedEvents) {
+      const eventParticipations = participations.filter(
+        p => p.event._id.toString() === event._id.toString()
+      );
+      
+      const registrations = eventParticipations.length;
+      const revenue = eventParticipations.filter(p => p.paymentStatus === "Paid")
+        .reduce((sum) => sum + event.registrationFee, 0);
+      const attendance = eventParticipations.filter(p => p.status === "Completed").length;
+
+      totalRegistrations += registrations;
+      totalRevenue += revenue;
+      totalAttendance += attendance;
+
+      eventBreakdown.push({
+        eventId: event._id,
+        eventName: event.eventName,
+        eventType: event.eventType,
+        registrations,
+        revenue,
+        attendance
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      analytics: {
+        totalCompletedEvents: completedEvents.length,
+        totalRegistrations,
+        totalRevenue,
+        totalAttendance,
+        eventBreakdown
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching dashboard analytics",
+      error: error.message
+    });
+  }
+};
+
 export const exportParticipantsCSV = async (req, res) => {
   try {
     const participations = await Participation.find({ event: req.params.eventId }).populate("participant", "firstName lastName email");
@@ -330,19 +423,20 @@ export const updateEvent = async (req, res) => {
           updates.registrationLimit > event.registrationLimit)
         event.registrationLimit = updates.registrationLimit;
 
-      if (updates.status === "closed")
-        event.status = "closed";
+      // Close registrations - set deadline to now
+      if (updates.closeRegistrations === true) {
+        event.registrationDeadline = new Date();
+      }
     }
 
-    // ONGOING → only status change
+    // ONGOING → can only be marked as completed
     else if (event.status === "ongoing") {
 
-      if (updates.status &&
-          ["completed", "closed"].includes(updates.status)) {
-        event.status = updates.status;
+      if (updates.status === "completed") {
+        event.status = "completed";
       } else {
         return res.status(400).json({
-          message: "Ongoing events can only change status to completed or closed"
+          message: "Ongoing events can only be marked as completed"
         });
       }
     }

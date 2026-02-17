@@ -29,7 +29,17 @@ const participationSchema = new mongoose.Schema({
         type: String,
         enum: ["Not Required", "Pending", "Paid"],
         default: "Not Required"
-    }
+    },
+    // For merchandise events
+    merchandiseSelection: {
+        size: String,
+        color: String
+    },
+    // For normal events with custom form fields
+    customFieldResponses: [{
+        fieldName: String,
+        fieldValue: String
+    }]
 }, {
     timestamps: true
 });
