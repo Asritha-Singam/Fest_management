@@ -3,6 +3,7 @@ import { useEffect, useState, useContext } from "react";
 import OrganizerNavbar from "../../components/organizerNavbar";
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../services/api";
+import ForumButton from "../../components/ForumButton";
 
 const OrganizerEventDetail = () => {
   const { id } = useParams();
@@ -136,7 +137,14 @@ const OrganizerEventDetail = () => {
       <OrganizerNavbar />
 
       <div style={{ padding: "30px", maxWidth: "1200px", margin: "0 auto" }}>
-        <h2>{event.eventName}</h2>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+          <h2>{event.eventName}</h2>
+          <ForumButton
+            eventId={event._id}
+            eventName={event.eventName}
+            isOrganizer={true}
+          />
+        </div>
         
         {/* Overview Section */}
         <div style={{ marginBottom: "30px", padding: "20px", backgroundColor: "#f8f9fa", borderRadius: "8px" }}>
@@ -151,7 +159,7 @@ const OrganizerEventDetail = () => {
           <p><strong>Registration Limit:</strong> {event.registrationLimit || "Unlimited"}</p>
         </div>
 
-      {event.status !== "completed" && event.status !== "closed" && (
+      {event.status !== "completed" && (
         <button onClick={() => setEditMode(!editMode)} style={{ padding: "10px 20px", backgroundColor: editMode ? "#6c757d" : "#2E1A47", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", marginBottom: "20px" }}>
           {editMode ? "Cancel" : "Edit Event"}
         </button>
@@ -192,17 +200,6 @@ const OrganizerEventDetail = () => {
                 style={{ width: "100%", padding: "10px", marginBottom: "10px", boxSizing: "border-box" }}
               />
 
-              <select
-                onChange={(e) => {
-                  if (e.target.value) {
-                    setEditData({ ...editData, status: e.target.value });
-                  }
-                }}
-                style={{ width: "100%", padding: "10px", marginBottom: "10px", boxSizing: "border-box" }}
-              >
-                <option value="">Change Status</option>
-                <option value="closed">Close Draft Event</option>
-              </select>
             </>
           )}
 

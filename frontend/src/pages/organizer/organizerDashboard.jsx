@@ -3,6 +3,7 @@ import axios from "axios";
 import { AuthContext } from "../../context/AuthContext";
 import OrganizerNavbar from "../../components/organizerNavbar";
 import { Link } from "react-router-dom";
+import ForumButton from "../../components/ForumButton";
 
 const OrganizerDashboard = () => {
   const { token } = useContext(AuthContext);
@@ -55,7 +56,7 @@ const OrganizerDashboard = () => {
       case 'published': return '#007bff';
       case 'ongoing': return '#28a745';
       case 'completed': return '#17a2b8';
-      case 'closed': return '#dc3545';
+
       default: return '#6c757d';
     }
   };
@@ -155,12 +156,19 @@ const OrganizerDashboard = () => {
                   <p style={{ fontSize: "14px", color: "#666", margin: "5px 0" }}>
                     <strong>Registrations:</strong> {event.registrationCount || 0} / {event.registrationLimit || '∞'}
                   </p>
-                  <Link 
-                    to={`/organizer/events/${event._id}`}
-                    style={viewDetailsButton}
-                  >
-                    View Details →
-                  </Link>
+                  <div style={{ display: "flex", gap: "10px", marginTop: "15px" }}>
+                    <Link 
+                      to={`/organizer/events/${event._id}`}
+                      style={viewDetailsButton}
+                    >
+                      View Details →
+                    </Link>
+                    <ForumButton 
+                      eventId={event._id} 
+                      eventName={event.eventName}
+                      isOrganizer={true}
+                    />
+                  </div>
                 </div>
               ))}
             </div>

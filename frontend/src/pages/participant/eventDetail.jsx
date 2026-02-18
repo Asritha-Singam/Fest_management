@@ -2,6 +2,7 @@ import { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../services/api";
+import ForumButton from "../../components/ForumButton";
 
 const EventDetail = () => {
   const { id } = useParams();
@@ -182,9 +183,18 @@ const EventDetail = () => {
         </button>
 
         <div style={mainCard}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: "12px" }}>
             <h1 style={{ marginTop: 0 }}>{event.eventName}</h1>
-            <span style={typeBadge}>{event.eventType}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={typeBadge}>{event.eventType}</span>
+              {isRegistered && (
+                <ForumButton
+                  eventId={event._id}
+                  eventName={event.eventName}
+                  isOrganizer={false}
+                />
+              )}
+            </div>
           </div>
 
           {/* Description Section - More Prominent */}

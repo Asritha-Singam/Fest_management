@@ -20,6 +20,7 @@ const AdminNavbar = () => {
         <div style={linksStyle}>
           <Link to="/admin/dashboard" style={linkStyle}>Dashboard</Link>
           <Link to="/admin/create-organizer" style={linkStyle}>Create Organizer</Link>
+          <Link to="/admin/password-reset-requests" style={linkStyle}>Password Resets</Link>
           <button onClick={handleLogout} style={logoutButtonStyle}>
             Logout
           </button>

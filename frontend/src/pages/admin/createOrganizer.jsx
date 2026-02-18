@@ -11,11 +11,10 @@ const CreateOrganizer = () => {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
-    email: "",
-    password: "",
-    confirmPassword: ""
+    email: ""
   });
 
+  const [generatedPassword, setGeneratedPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -44,24 +43,15 @@ const CreateOrganizer = () => {
       setError("Email is required");
       return;
     }
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters");
-      return;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
 
     try {
       setLoading(true);
-      await api.post(
+      const response = await api.post(
         "/admin/organizers",
         {
           firstName: formData.firstName,
           lastName: formData.lastName,
-          email: formData.email,
-          password: formData.password
+          email: formData.email
         },
         {
           headers: {
@@ -70,8 +60,13 @@ const CreateOrganizer = () => {
         }
       );
 
-      alert("Organizer created successfully!");
-      navigate("/admin/dashboard");
+      // Store generated password for display
+      setGeneratedPassword(response.data.generatedPassword);
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: ""
+      });
     } catch (err) {
       console.error("Error creating organizer:", err);
       setError(
@@ -89,7 +84,7 @@ const CreateOrganizer = () => {
       <div style={{ padding: "30px", maxWidth: "600px", margin: "0 auto" }}>
         <h1>Create New Organizer</h1>
         <p style={{ color: "#666", marginBottom: "30px" }}>
-          Add a new event organizer to the system
+          Add a new event organizer to the system. Password will be auto-generated.
         </p>
 
         {error && (
@@ -102,6 +97,40 @@ const CreateOrganizer = () => {
             border: "1px solid #f5c6cb"
           }}>
             {error}
+          </div>
+        )}
+
+        {generatedPassword && (
+          <div style={{
+            backgroundColor: "#d4edda",
+            color: "#155724",
+            padding: "15px",
+            borderRadius: "4px",
+            marginBottom: "20px",
+            border: "1px solid #c3e6cb"
+          }}>
+            <h4 style={{ margin: "0 0 10px 0" }}>Organizer Created Successfully!</h4>
+            <p style={{ margin: "0 0 10px 0", fontWeight: "bold" }}>
+              {formData.firstName} {formData.lastName}
+            </p>
+            <p style={{ margin: "0 0 10px 0" }}>
+              <strong>Email:</strong> {formData.email}
+            </p>
+            <p style={{ margin: "0 0 10px 0" }}>
+              <strong>Generated Password:</strong> 
+              <code style={{ 
+                backgroundColor: "#fff", 
+                padding: "5px 10px", 
+                borderRadius: "3px",
+                marginLeft: "8px",
+                fontFamily: "monospace"
+              }}>
+                {generatedPassword}
+              </code>
+            </p>
+            <p style={{ margin: "0", fontSize: "12px", color: "#0c5460" }}>
+              Please share these credentials with the organizer. They can change their password after logging in.
+            </p>
           </div>
         )}
 
@@ -151,43 +180,13 @@ const CreateOrganizer = () => {
             />
           </div>
 
-          <div>
-            <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>
-              Password *
-            </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="At least 6 characters"
-              style={inputStyle}
-              required
-            />
-          </div>
-
-          <div>
-            <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>
-              Confirm Password *
-            </label>
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              placeholder="Confirm password"
-              style={inputStyle}
-              required
-            />
-          </div>
-
           <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
             <button
               type="submit"
               disabled={loading}
               style={{
                 ...buttonStyle,
-                backgroundColor: loading ? "#999" : "#007bff",
+                backgroundColor: loading ? "#999" : "#28a745",
                 cursor: loading ? "not-allowed" : "pointer"
               }}
             >

@@ -29,56 +29,52 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleDisable = async (id, currentStatus) => {
-    try {
-      setLoading(true);
-      const newStatus = !currentStatus; // Toggle boolean
-      const response = await api.patch(
-        `/admin/organizers/${id}/disable`,
-        { isActive: newStatus },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      console.log("Update response:", response.data);
-      
-      setLoading(false);
-      fetchOrganizers();
-      alert(`Organizer ${newStatus ? "enabled" : "disabled"} successfully`);
-    } catch (err) {
-      setLoading(false);
-      console.error("Error updating organizer:", err.response?.data || err.message);
-      alert(`Failed to update organizer: ${err.response?.data?.message || err.message}`);
+  const handleArchive = async (id, name) => {
+    if (window.confirm(`Archive ${name}? They will not be able to log in.`)) {
+      try {
+        await api.patch(
+          `/admin/organizers/${id}/disable`,
+          { isActive: false },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        fetchOrganizers();
+        alert(`${name} has been archived. They cannot log in.`);
+      } catch (err) {
+        console.error("Error archiving organizer:", err);
+        alert("Failed to archive organizer");
+      }
     }
   };
 
-  const handleDelete = async (id, name) => {
-    if (window.confirm(`Are you sure you want to delete ${name}?`)) {
+  const handleReactivate = async (id, name) => {
+    if (window.confirm(`Reactivate ${name}? They will be able to log in again.`)) {
+      try {
+        await api.patch(
+          `/admin/organizers/${id}/disable`,
+          { isActive: true },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        fetchOrganizers();
+        alert(`${name} has been reactivated.`);
+      } catch (err) {
+        console.error("Error reactivating organizer:", err);
+        alert("Failed to reactivate organizer");
+      }
+    }
+  };
+
+  const handlePermanentlyDelete = async (id, name) => {
+    if (window.confirm(`PERMANENTLY DELETE ${name}? This cannot be undone. All their events and data will be deleted.`)) {
       try {
         await api.delete(
           `/admin/organizers/${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         fetchOrganizers();
-        alert("Organizer deleted successfully");
+        alert(`${name} has been permanently deleted.`);
       } catch (err) {
         console.error("Error deleting organizer:", err);
         alert("Failed to delete organizer");
-      }
-    }
-  };
-
-  const handleResetPassword = async (id, name) => {
-    if (window.confirm(`Are you sure you want to reset password for ${name}?`)) {
-      try {
-        const response = await api.patch(
-          `/admin/organizers/${id}/reset-password`,
-          {},
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        alert(`Password reset successfully!\n\nNew Password: ${response.data.newPassword}\n\nPlease share this with the organizer.`);
-      } catch (err) {
-        console.error("Error resetting password:", err);
-        alert("Failed to reset password");
       }
     }
   };
@@ -135,29 +131,39 @@ const AdminDashboard = () => {
                 </div>
 
                 <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                  <button
-                    onClick={() => handleDisable(organizer._id, organizer.isActive)}
-                    style={{
-                      ...buttonStyle,
-                      backgroundColor: organizer.isActive ? "#ffc107" : "#28a745"
-                    }}
-                  >
-                    {organizer.isActive ? "Disable" : "Enable"}
-                  </button>
+                  {organizer.isActive ? (
+                    <>
+                      <button
+                        onClick={() => handleArchive(organizer._id, `${organizer.firstName} ${organizer.lastName}`)}
+                        style={{ ...buttonStyle, backgroundColor: "#ffc107" }}
+                      >
+                        Archive (Disable)
+                      </button>
 
-                  <button
-                    onClick={() => handleResetPassword(organizer._id, `${organizer.firstName} ${organizer.lastName}`)}
-                    style={{ ...buttonStyle, backgroundColor: "#17a2b8" }}
-                  >
-                    Reset Password
-                  </button>
+                      <button
+                        onClick={() => handlePermanentlyDelete(organizer._id, `${organizer.firstName} ${organizer.lastName}`)}
+                        style={{ ...buttonStyle, backgroundColor: "#dc3545" }}
+                      >
+                        Delete Permanently
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => handleReactivate(organizer._id, `${organizer.firstName} ${organizer.lastName}`)}
+                        style={{ ...buttonStyle, backgroundColor: "#28a745" }}
+                      >
+                        Reactivate
+                      </button>
 
-                  <button
-                    onClick={() => handleDelete(organizer._id, `${organizer.firstName} ${organizer.lastName}`)}
-                    style={{ ...buttonStyle, backgroundColor: "#dc3545" }}
-                  >
-                    Delete
-                  </button>
+                      <button
+                        onClick={() => handlePermanentlyDelete(organizer._id, `${organizer.firstName} ${organizer.lastName}`)}
+                        style={{ ...buttonStyle, backgroundColor: "#dc3545" }}
+                      >
+                        Delete Permanently
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}

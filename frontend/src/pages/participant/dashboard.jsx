@@ -2,6 +2,7 @@ import { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../services/api";
+import ForumButton from "../../components/ForumButton";
 
 const Dashboard = () => {
   const { token } = useContext(AuthContext);
@@ -94,24 +95,45 @@ const Dashboard = () => {
         )}
       </div>
 
-      <div style={{ display: "flex", gap: "10px" }}>
-        <button
-          onClick={() => navigate(`/ticket/${participation._id}`, { state: participation })}
-          style={viewTicketButton}
-        >
-          View Ticket
-        </button>
-        <button
-          onClick={() => handleCancelRegistration(participation._id)}
-          disabled={cancellingId === participation._id}
-          style={{
-            ...cancelButton,
-            opacity: cancellingId === participation._id ? 0.6 : 1,
-            cursor: cancellingId === participation._id ? "not-allowed" : "pointer"
-          }}
-        >
-          {cancellingId === participation._id ? "Cancelling..." : "Cancel"}
-        </button>
+      <div style={cardFooter}>
+        <div style={{ display: "flex", gap: "10px", flex: 1 }}>
+          <button
+            onClick={() => navigate(`/ticket/${participation._id}`, { state: participation })}
+            style={viewTicketButton}
+          >
+            View Ticket
+          </button>
+          <button
+            onClick={() => handleCancelRegistration(participation._id)}
+            disabled={cancellingId === participation._id}
+            style={{
+              ...cancelButton,
+              opacity: cancellingId === participation._id ? 0.6 : 1,
+              cursor: cancellingId === participation._id ? "not-allowed" : "pointer"
+            }}
+          >
+            {cancellingId === participation._id ? "Cancelling..." : "Cancel"}
+          </button>
+        </div>
+        <ForumButton 
+          eventId={participation.event._id} 
+          eventName={participation.event.eventName}
+          isOrganizer={false}
+        />
+        {participation.qrCodeData && (
+          <button
+            type="button"
+            onClick={() => navigate(`/ticket/${participation._id}`, { state: participation })}
+            style={qrPreviewButton}
+            aria-label="View ticket QR code"
+          >
+            <img
+              src={participation.qrCodeData}
+              alt="Ticket QR code"
+              style={qrPreviewImage}
+            />
+          </button>
+        )}
       </div>
     </div>
   );
@@ -238,6 +260,29 @@ const gridStyle = {
   gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
   gap: "20px",
   marginTop: "20px"
+};
+
+const cardFooter = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "16px"
+};
+
+const qrPreviewButton = {
+  border: "1px solid #e3e3e3",
+  borderRadius: "10px",
+  padding: "6px",
+  background: "#fff",
+  cursor: "pointer",
+  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)"
+};
+
+const qrPreviewImage = {
+  display: "block",
+  width: "90px",
+  height: "90px",
+  objectFit: "contain"
 };
 
 const cardStyle = {
