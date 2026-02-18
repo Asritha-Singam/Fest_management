@@ -756,7 +756,7 @@ Get connection string from MongoDB Atlas:
 - ✅ **Event Creation** - Organizers can create events with all details
 - ✅ **Event Listing** - Public endpoint with search and filters
 - ✅ **Event Details** - Get single event by ID
-- ✅ **Event Status Workflow** - Draft → Published → Ongoing → Completed/Closed
+- ✅ **Event Status Workflow** - Draft → Published → Ongoing → Completed
 - ✅ **Event Publishing** - Organizers publish events to make them visible
 - ✅ **Event Editing** - Organizers edit with status-based field restrictions
   - Draft events: Full editing (all fields)
@@ -950,7 +950,7 @@ Get connection string from MongoDB Atlas:
   merchandiseDetails: String,
   organizerId: ObjectId (ref: User),
   customFormFields: Array,
-  status: String ("DRAFT" | "PUBLISHED" | "ONGOING" | "COMPLETED" | "CLOSED"),
+  status: String ("DRAFT" | "PUBLISHED" | "ONGOING" | "COMPLETED"),
   createdAt: Date,
   updatedAt: Date
 }
@@ -1053,10 +1053,10 @@ When a participant registers for an event:
 Events progress through states with different permissions:
 
 ```
-Draft → Published → Ongoing → Completed/Closed
+Draft → Published → Ongoing → Completed
   ↓         ↓          ↓            ↓
 Only    Visible to  Registrations  No new
-Org    Participants   Closed     registrations
+Org    Participants   Ongoing     registrations
 Can    Can register  View only
 Edit
 ```
@@ -1069,15 +1069,15 @@ Edit
 **Published Event** (Public)
 - Visible to all participants
 - Can register for event
-- Organizer can edit: description, deadline, registration limit, close event
-- Organizer cannot edit: dates, eligibility, type, fee, etc.
+- Organizer can edit all fields
+- Dates, eligibility, type, fee can all be modified
 
 **Ongoing Event** (In Progress)
 - People currently attending
 - New registrations can still happen
-- Organizer can only change status
+- Organizer can only change status to completed
 
-**Completed/Closed Event** (Done)
+**Completed Event** (Done)
 - No new registrations
 - Historical data preserved
 - CSV export still available
