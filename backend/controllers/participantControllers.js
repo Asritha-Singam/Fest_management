@@ -89,12 +89,24 @@ export const registerForEvent = async (req, res) => {
     }
     const random=Math.floor(100000 + Math.random() * 900000);
     const ticketId=`FEL-${eventId.toString().slice(-6)}-${random}`;
+    const qrCodePayload = `Ticket ID: ${ticketId}`;
+    let qrCodeDataUrl = null;
+
+    try {
+      qrCodeDataUrl = await QRCode.toDataURL(qrCodePayload);
+    } catch (qrError) {
+      console.error("Failed to generate QR code data URL:", qrError.message);
+    }
 
     const participationData = {
       participant: userId,
       event: eventId,
       ticketId,
     };
+
+    if (qrCodeDataUrl) {
+      participationData.qrCodeData = qrCodeDataUrl;
+    }
 
     // Add merchandise selection if applicable
     if (event.eventType === "MERCHANDISE" && merchandiseSelection) {
@@ -116,8 +128,7 @@ export const registerForEvent = async (req, res) => {
     
     // Try sending email with QR code (don't fail registration if email fails)
     try {
-      const qrCodeData = `Ticket ID: ${ticketId}`;
-      const qrCodeBuffer = await QRCode.toBuffer(qrCodeData);
+      const qrCodeBuffer = await QRCode.toBuffer(qrCodePayload);
 
       // Build email content with merchandise/custom field details
       let additionalInfo = "";

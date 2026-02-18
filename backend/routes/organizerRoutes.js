@@ -2,7 +2,7 @@ import express from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
 import authorizeRoles from "../middleware/roleMiddleware.js";
 import { createEvent, getEventParticipants, getOrganizerEvents, publishEvent, getEventAnalytics, exportParticipantsCSV, updateEvent, getDashboardAnalytics } from "../controllers/eventControllers.js"; 
-import { getOrganizerProfile, updateOrganizerProfile } from "../controllers/organizerControllers.js";
+import { getOrganizerProfile, updateOrganizerProfile, requestPasswordReset, getPasswordResetHistory } from "../controllers/organizerControllers.js";
 const router = express.Router();
 
 //protect all organizer routes
@@ -38,4 +38,11 @@ router.get("/profile", getOrganizerProfile);
 
 //update organizer profile (PUT /api/organizer/profile)
 router.put("/profile", updateOrganizerProfile);
+
+//request password reset (POST /api/organizer/request-password-reset)
+router.post("/request-password-reset", requestPasswordReset);
+
+//password reset history (GET /api/organizer/password-reset-history)
+router.get("/password-reset-history", getPasswordResetHistory);
+
 export default router;

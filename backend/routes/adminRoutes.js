@@ -6,7 +6,11 @@ import {
   getAllOrganizers,
   disableOrganizer,
   deleteOrganizer,
-  resetOrganizerPassword
+  resetOrganizerPassword,
+  getPasswordResetRequests,
+  getPendingResetRequests,
+  approvePasswordReset,
+  rejectPasswordReset
 } from "../controllers/adminControllers.js";
 
 const router = express.Router();
@@ -19,5 +23,11 @@ router.get("/organizers", getAllOrganizers);
 router.patch("/organizers/:id/disable", disableOrganizer);
 router.patch("/organizers/:id/reset-password", resetOrganizerPassword);
 router.delete("/organizers/:id", deleteOrganizer);
+
+// Password Reset Request Routes (specific routes BEFORE generic routes)
+router.get("/password-reset-requests/pending", getPendingResetRequests);
+router.get("/password-reset-requests", getPasswordResetRequests);
+router.patch("/password-reset-requests/:requestId/approve", approvePasswordReset);
+router.patch("/password-reset-requests/:requestId/reject", rejectPasswordReset);
 
 export default router;

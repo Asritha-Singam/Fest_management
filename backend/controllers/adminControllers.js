@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import User from "../models/User.js";
+import PasswordReset from "../models/PasswordReset.js";
 
 // Create organizer (Admin only)
 export const createOrganizerAdmin = async (req, res) => {
@@ -131,5 +132,143 @@ export const resetOrganizerPassword = async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Get all password reset requests
+export const getPasswordResetRequests = async (req, res) => {
+  try {
+    const requests = await PasswordReset.find()
+      .populate("user", "firstName lastName email role")
+      .populate("approvedBy", "firstName lastName")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: requests.length,
+      requests
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      message: "Error fetching password reset requests",
+      error: error.message 
+    });
+  }
+};
+
+// Get pending password reset requests only
+export const getPendingResetRequests = async (req, res) => {
+  try {
+    const requests = await PasswordReset.find({ status: "pending" })
+      .populate("user", "firstName lastName email role")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: requests.length,
+      requests
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      message: "Error fetching pending requests",
+      error: error.message 
+    });
+  }
+};
+
+// Approve password reset request
+export const approvePasswordReset = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { comment } = req.body;
+
+    const resetRequest = await PasswordReset.findById(requestId);
+
+    if (!resetRequest) {
+      return res.status(404).json({ message: "Request not found" });
+    }
+
+    if (resetRequest.status !== "pending") {
+      return res.status(400).json({ 
+        message: `Cannot approve a ${resetRequest.status} request` 
+      });
+    }
+
+    // Generate new password
+    const newPassword = Math.random().toString(36).slice(-8);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update user password
+    const user = await User.findById(resetRequest.user);
+    user.password = hashedPassword;
+    await user.save();
+
+    // Update reset request
+    resetRequest.status = "approved";
+    resetRequest.newPassword = newPassword;
+    resetRequest.approvedBy = req.user.id;
+    resetRequest.approvedAt = new Date();
+    if (comment && comment.trim()) {
+      resetRequest.adminComment = comment.trim();
+    }
+    resetRequest.updatedAt = new Date();
+    await resetRequest.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset approved",
+      request: resetRequest,
+      newPassword: newPassword
+    });
+
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      message: "Error approving password reset",
+      error: error.message 
+    });
+  }
+};
+
+// Reject password reset request
+export const rejectPasswordReset = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { reason, comment } = req.body;
+
+    const resetRequest = await PasswordReset.findById(requestId);
+
+    if (!resetRequest) {
+      return res.status(404).json({ message: "Request not found" });
+    }
+
+    if (resetRequest.status !== "pending") {
+      return res.status(400).json({ 
+        message: `Cannot reject a ${resetRequest.status} request` 
+      });
+    }
+
+    resetRequest.status = "rejected";
+    resetRequest.rejectionReason = reason || "No reason provided";
+    if (comment && comment.trim()) {
+      resetRequest.adminComment = comment.trim();
+    }
+    resetRequest.updatedAt = new Date();
+    await resetRequest.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset request rejected",
+      request: resetRequest
+    });
+
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      message: "Error rejecting password reset",
+      error: error.message 
+    });
   }
 };

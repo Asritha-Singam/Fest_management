@@ -1,7 +1,7 @@
 import Event from "../models/events.js";
 import Participation from "../models/participation.js";
 import {Parser} from "json2csv";
-
+import {sendDiscordMessage} from "../utils/sendDiscord.js";
 // Helper function to update event status to "ongoing" if date falls between start and end
 const updateEventStatusIfOngoing = async (event) => {
   const now = new Date();
@@ -64,6 +64,19 @@ export const createEvent = async (req, res) => {
     });
 
     await newEvent.save();
+      // Send Discord notification for new event creation
+    const populatedEvent = await Event.findById(newEvent._id).populate("organizer");
+    await sendDiscordMessage(
+      `New Event Created: **${newEvent.eventName}**
+      by ${populatedEvent.organizer.firstName} ${populatedEvent.organizer.lastName}
+
+      - Description: ${newEvent.eventDescription}
+      - Type: ${newEvent.eventType}
+      - Eligibility: ${newEvent.eligibility}
+      - Registration Deadline: ${newEvent.registrationDeadline.toDateString()}
+      - Event Dates: ${newEvent.eventStartDate.toDateString()} to ${newEvent.eventEndDate.toDateString()}
+      - Registration Fee: $${newEvent.registrationFee}`
+      );
 
     res.status(201).json({
       success: true,
@@ -441,10 +454,10 @@ export const updateEvent = async (req, res) => {
       }
     }
 
-    // COMPLETED or CLOSED → no edits
+    // COMPLETED → no edits
     else {
       return res.status(400).json({
-        message: "Completed or closed events cannot be edited"
+        message: "Completed events cannot be edited"
       });
     }
 

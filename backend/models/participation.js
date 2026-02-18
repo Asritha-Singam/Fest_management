@@ -16,6 +16,9 @@ const participationSchema = new mongoose.Schema({
         type: String,
         unique: true
     },
+    qrCodeData: {
+        type: String
+    },
     status: {
         type: String,
         enum: ["Registered", "Cancelled", "Completed"],
