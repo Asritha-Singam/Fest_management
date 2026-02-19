@@ -33,8 +33,14 @@ const SignupForm = () => {
         e.preventDefault();
         setError("");
 
+        // Validate captcha
+        if (!captchaToken) {
+            setError("Please complete the captcha verification");
+            return;
+        }
+
         try{
-            const response = await register(formData, captchaToken);
+            const response = await register({ ...formData, captchaToken });
             // After successful registration, login and redirect to onboarding
             navigate("/login?onboarding=true");
         }catch(err){

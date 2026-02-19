@@ -21,6 +21,12 @@ const LoginForm = () => {
     e.preventDefault();
     setError("");
 
+    // Validate captcha
+    if (!captchaToken) {
+      setError("Please complete the captcha verification");
+      return;
+    }
+
     try {
       const response = await loginAPI({ email, password, captchaToken });
       

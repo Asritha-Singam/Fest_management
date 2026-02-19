@@ -21,6 +21,7 @@ const AdminNavbar = () => {
           <Link to="/admin/dashboard" style={linkStyle}>Dashboard</Link>
           <Link to="/admin/create-organizer" style={linkStyle}>Create Organizer</Link>
           <Link to="/admin/password-reset-requests" style={linkStyle}>Password Resets</Link>
+          <Link to="/admin/security" style={linkStyle}>Security</Link>
           <button onClick={handleLogout} style={logoutButtonStyle}>
             Logout
           </button>

@@ -12,6 +12,7 @@ import {
   approvePasswordReset,
   rejectPasswordReset
 } from "../controllers/adminControllers.js";
+import securityRoutes from "./securityRoutes.js";
 
 const router = express.Router();
 
@@ -29,5 +30,8 @@ router.get("/password-reset-requests/pending", getPendingResetRequests);
 router.get("/password-reset-requests", getPasswordResetRequests);
 router.patch("/password-reset-requests/:requestId/approve", approvePasswordReset);
 router.patch("/password-reset-requests/:requestId/reject", rejectPasswordReset);
+
+// Security monitoring routes
+router.use("/security", securityRoutes);
 
 export default router;

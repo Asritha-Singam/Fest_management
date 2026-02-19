@@ -22,24 +22,27 @@ import bcrypt from "bcrypt";
 import axios from "axios";
 import User from "../models/User.js";
 import Participant from "../models/participant.js";
+import { logSecurityEvent, trackFailedLogin } from "../middleware/securityMiddleware.js";
 
 export const registerParticipant = async (req, res) => {
     try {
-        const verify = await axios.post(
-        "https://www.google.com/recaptcha/api/siteverify",
-        null,
-        {
-            params: {
-                secret: process.env.RECAPTCHA_SECRET_KEY,
-                response: req.body.captchaToken
-            }
+        const { firstName, lastName, email, password, participantType, collegeOrOrg, contactNumber, interests, captchaToken } = req.body;
+
+        // Validate captcha token
+        if (!captchaToken) {
+            return res.status(400).json({ message: "Captcha verification required" });
         }
+
+        // Verify captcha with Google
+        const verify = await axios.post(
+            "https://www.google.com/recaptcha/api/siteverify",
+            `secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaToken}`
         );
 
         if (!verify.data.success) {
-            return res.status(400).json({ message: "Captcha failed" });
+            console.error('Captcha verification failed:', verify.data);
+            return res.status(400).json({ message: "Captcha failed. Please try again." });
         }
-        const { firstName, lastName, email, password, participantType, collegeOrOrg, contactNumber, interests } = req.body;
         if (!firstName || !lastName || !email || !password || !participantType || !collegeOrOrg || !contactNumber) {
             return res.status(400).json({ message: "All fields are required" });
         }
@@ -80,37 +83,57 @@ export const registerParticipant = async (req, res) => {
 };
 export const loginUser = async (req, res) => {
     try {
-        const verify = await axios.post(
-        "https://www.google.com/recaptcha/api/siteverify",
-        null,
-        {
-            params: {
-                secret: process.env.RECAPTCHA_SECRET_KEY,
-                response: req.body.captchaToken
-            }
+        const { email, password, captchaToken } = req.body;
+
+        // Validate captcha token
+        if (!captchaToken) {
+            return res.status(400).json({ message: "Captcha verification required" });
         }
+
+        // Verify captcha with Google
+        const verify = await axios.post(
+            "https://www.google.com/recaptcha/api/siteverify",
+            `secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaToken}`
         );
 
         if (!verify.data.success) {
-            return res.status(400).json({ message: "Captcha failed" });
+            console.error('Captcha verification failed:', verify.data);
+            return res.status(400).json({ message: "Captcha failed. Please try again." });
         }
 
-        const { email, password } =req.body;
+        // email, password, captchaToken already extracted above
 
         if (!email || !password) {
             return res.status(400).json({ message: "Email and password are required" });
         }
         const user = await User.findOne({ email }).select("+password");
         if (!user) {
+            // Track failed login attempt
+            await trackFailedLogin(req, res, () => {});
             return res.status(400).json({ message: "Invalid email or password" });
         }
         if(user.isActive === false){
+            await logSecurityEvent('SUSPICIOUS_ACTIVITY', req, {
+                email,
+                details: 'Attempt to login to disabled account',
+                severity: 'MEDIUM'
+            });
             return res.status(403).json({ message: "Your account has been disabled. Please contact support." });
         }
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
+            // Track failed login attempt
+            await trackFailedLogin(req, res, () => {});
             return res.status(400).json({ message: "Invalid email or password" });
         }
+        
+        // Log successful login
+        await logSecurityEvent('SUCCESSFUL_LOGIN', req, {
+            email,
+            details: 'Successful login',
+            severity: 'LOW'
+        });
+        
         const token = jwt.sign(
             { userId: user._id, role: user.role },
             process.env.JWT_SECRET,

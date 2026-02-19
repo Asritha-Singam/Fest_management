@@ -23,6 +23,7 @@ import OngoingEvents from "./pages/organizer/ongoingEvents";
 import AdminDashboardComponent from "./pages/admin/adminDashboard";
 import CreateOrganizer from "./pages/admin/createOrganizer";
 import PasswordResetRequests from "./pages/admin/passwordResetRequests";
+import SecurityDashboard from "./pages/admin/securityDashboard";
 
 function AppContent() {
     const { token, role } = useContext(AuthContext);
@@ -152,6 +153,11 @@ function AppContent() {
                     <Route path="/admin/password-reset-requests" element={
                         <ProtectedRoute allowedRoles={["admin"]}>
                             <PasswordResetRequests />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/security" element={
+                        <ProtectedRoute allowedRoles={["admin"]}>
+                            <SecurityDashboard />
                         </ProtectedRoute>
                     } />
                 </Routes>
