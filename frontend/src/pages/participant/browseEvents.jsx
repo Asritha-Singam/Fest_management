@@ -66,18 +66,18 @@ const BrowseEvents = () => {
     };
 
     const fetchParticipantCounts = async (eventIds) => {
+      // Participant-level view doesn't need organizer endpoint access
+      // Participant counts are not required for browsing events
       try {
-        // Fetch participant count for each event
+        // If events include registrationCount in their data, use that
+        // Otherwise, set empty counts
         const counts = {};
-        for (const eventId of eventIds) {
-          const response = await api.get(`/organizer/events/${eventId}/participants`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          counts[eventId] = response.data.count || 0;
-        }
+        eventIds.forEach(id => {
+          counts[id] = 0; // Placeholder - use data from event object if available
+        });
         setEventParticipantCounts(counts);
       } catch (error) {
-        console.error("Error fetching participant counts", error);
+        console.error("Error setting participant counts", error);
       }
     };
 
@@ -389,7 +389,8 @@ const BrowseEvents = () => {
                   {(() => {
                     const isRegistered = registeredEvents.has(event._id);
                     const isDeadlinePassed = new Date() > new Date(event.registrationDeadline);
-                    const participantCount = eventParticipantCounts[event._id] || 0;
+                    // Use event's own registrationCount or fetch from counts
+                    const participantCount = event.registrationCount || eventParticipantCounts[event._id] || 0;
                     const isLimitReached = event.registrationLimit > 0 && participantCount >= event.registrationLimit;
                     
                     const isEligible = 

@@ -4,12 +4,14 @@ import { AuthContext } from "../../context/AuthContext";
 import OrganizerNavbar from "../../components/organizerNavbar";
 import { Link } from "react-router-dom";
 import ForumButton from "../../components/ForumButton";
+import PaymentApprovalTab from "../../components/PaymentApprovalTab";
 
 const OrganizerDashboard = () => {
   const { token } = useContext(AuthContext);
   const [events, setEvents] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [loadingAnalytics, setLoadingAnalytics] = useState(true);
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -67,6 +69,25 @@ const OrganizerDashboard = () => {
       <div style={containerStyle}>
         <h1 style={titleStyle}>Organizer Dashboard</h1>
 
+        {/* Tab Navigation */}
+        <div style={tabNavigationStyle}>
+          <button 
+            style={{ ...tabButtonStyle, ...(activeTab === 'overview' ? activeTabButtonStyle : {}) }}
+            onClick={() => setActiveTab('overview')}
+          >
+            Overview
+          </button>
+          <button 
+            style={{ ...tabButtonStyle, ...(activeTab === 'payments' ? activeTabButtonStyle : {}) }}
+            onClick={() => setActiveTab('payments')}
+          >
+            Payment Approvals
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'overview' && (
+        <>
         {/* Event Analytics Section */}
         <section style={analyticsSection}>
           <h2 style={sectionTitleStyle}>Event Analytics</h2>
@@ -174,6 +195,12 @@ const OrganizerDashboard = () => {
             </div>
           )}
         </section>
+        </>
+        )}
+
+        {activeTab === 'payments' && (
+          <PaymentApprovalTab />
+        )}
       </div>
     </>
   );
@@ -292,6 +319,30 @@ const viewDetailsButton = {
   borderRadius: "6px",
   fontSize: "14px",
   fontWeight: "500"
+};
+
+const tabNavigationStyle = {
+  display: "flex",
+  gap: "10px",
+  marginBottom: "30px",
+  borderBottom: "2px solid #e0e0e0"
+};
+
+const tabButtonStyle = {
+  padding: "12px 20px",
+  border: "none",
+  backgroundColor: "transparent",
+  color: "#666",
+  fontSize: "16px",
+  fontWeight: "600",
+  cursor: "pointer",
+  borderBottom: "3px solid transparent",
+  transition: "all 0.3s"
+};
+
+const activeTabButtonStyle = {
+  color: "#2E1A47",
+  borderBottomColor: "#2E1A47"
 };
 
 export default OrganizerDashboard;

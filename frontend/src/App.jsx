@@ -109,6 +109,7 @@ function AppContent() {
                             </ProtectedRoute>
                         }
                     />
+
                     <Route path="/organizer/dashboard" element={
                         
                         <ProtectedRoute allowedRoles={["organizer"]}>

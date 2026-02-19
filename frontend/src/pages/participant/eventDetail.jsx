@@ -2,6 +2,7 @@ import { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../services/api";
+import { createOrder, uploadPaymentProof, getMyOrders } from "../../services/paymentServices";
 import ForumButton from "../../components/ForumButton";
 
 const EventDetail = () => {
@@ -17,6 +18,14 @@ const EventDetail = () => {
   const [registering, setRegistering] = useState(false);
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
 
+  // Payment proof upload state
+  const [paymentProof, setPaymentProof] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('Card');
+  const [uploadingPayment, setUploadingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState(null);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [orderStatus, setOrderStatus] = useState(null); // Store order with payment info
+
   // Form data for merchandise or custom fields
   const [merchandiseSelection, setMerchandiseSelection] = useState({
     size: "",
@@ -29,6 +38,7 @@ const EventDetail = () => {
       fetchEventDetails();
       fetchUserProfile();
       checkRegistrationStatus();
+      fetchOrderStatus();
     }
   }, [token, id]);
 
@@ -73,6 +83,16 @@ const EventDetail = () => {
       setIsRegistered(registered);
     } catch (error) {
       console.error("Error checking registration", error);
+    }
+  };
+
+  const fetchOrderStatus = async () => {
+    try {
+      const response = await getMyOrders({ page: 1, limit: 100 });
+      const eventOrder = response.data.orders?.find(order => order.eventId?._id === id);
+      setOrderStatus(eventOrder || null);
+    } catch (error) {
+      console.error("Error fetching order status:", error);
     }
   };
 
@@ -154,6 +174,87 @@ const EventDetail = () => {
         return [...prev, { fieldName, fieldValue: value }];
       }
     });
+  };
+
+  const handlePaymentProofUpload = async (e) => {
+    e.preventDefault();
+    if (!paymentProof) {
+      setPaymentError('Please select a payment proof image');
+      return;
+    }
+
+    setUploadingPayment(true);
+    setPaymentError(null);
+    setPaymentSuccess(false);
+
+    try {
+      // First create order
+      const orderResponse = await createOrder(id, 1);
+      const orderId = orderResponse.data.orderId;
+
+      // Then upload payment proof
+      await uploadPaymentProof(orderId, paymentMethod, paymentProof);
+      setPaymentSuccess(true);
+      setPaymentProof(null);
+      setPaymentMethod('Card');
+      setTimeout(() => setPaymentSuccess(false), 5000);
+      
+      // Refresh order status after upload
+      await fetchOrderStatus();
+    } catch (error) {
+      setPaymentError(error.response?.data?.message || 'Failed to upload payment proof');
+    } finally {
+      setUploadingPayment(false);
+    }
+  };
+
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Check file size
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        setPaymentError('Image size must be less than 5MB');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        // Compress image before storing
+        const img = new Image();
+        img.src = reader.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Set max dimensions
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 800;
+          
+          if (width > height) {
+            if (width > maxDim) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Compress to JPEG with quality 0.8
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+          setPaymentProof(compressedBase64);
+          setPaymentError(null);
+        };
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   if (loading) return <div style={{ padding: "30px" }}>Loading...</div>;
@@ -309,6 +410,107 @@ const EventDetail = () => {
             >
               {isRegistered ? "✓ Registered" : registering ? "Registering..." : "Register Now"}
             </button>
+
+            {isRegistered && event.eventType === "MERCHANDISE" && (
+              <div style={{ marginTop: '20px', padding: '20px', backgroundColor: orderStatus?.paymentStatus === 'Approved' ? '#d4edda' : '#fff3cd', borderRadius: '8px', border: orderStatus?.paymentStatus === 'Approved' ? '1px solid #28a745' : '1px solid #ffc107' }}>
+                <p style={{ margin: '0 0 15px 0', color: orderStatus?.paymentStatus === 'Approved' ? '#155724' : '#856404', fontWeight: '600' }}>
+                  📋 Payment Status: 
+                  <span style={{ color: orderStatus?.paymentStatus === 'Approved' ? '#28a745' : orderStatus?.paymentStatus === 'Rejected' ? '#dc3545' : '#ffc107' }}>
+                    {orderStatus?.paymentStatus === 'Approved' ? '✓ Approved' : orderStatus?.paymentStatus === 'Rejected' ? '✗ Rejected' : orderStatus?.payment ? 'Pending Approval' : 'Not Uploaded'}
+                  </span>
+                </p>
+                
+                {paymentError && (
+                  <div style={{ padding: '10px', marginBottom: '15px', backgroundColor: '#ffebee', color: '#c62828', borderRadius: '4px', border: '1px solid #ef5350' }}>
+                    {paymentError}
+                  </div>
+                )}
+
+                {paymentSuccess && (
+                  <div style={{ padding: '10px', marginBottom: '15px', backgroundColor: '#e8f5e9', color: '#2e7d32', borderRadius: '4px', border: '1px solid #66bb6a' }}>
+                    ✓ Payment proof uploaded successfully! Awaiting organizer approval.
+                  </div>
+                )}
+
+                {orderStatus?.paymentStatus === 'Rejected' && orderStatus?.rejectionReason && (
+                  <div style={{ padding: '10px', marginBottom: '15px', backgroundColor: '#ffebee', color: '#c62828', borderRadius: '4px', border: '1px solid #ef5350' }}>
+                    <strong>Rejection Reason:</strong> {orderStatus.rejectionReason}
+                  </div>
+                )}
+
+                {(!orderStatus || !orderStatus.payment) && (
+                <form onSubmit={handlePaymentProofUpload} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#333' }}>
+                      Payment Method
+                    </label>
+                    <select
+                      value={paymentMethod}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        fontSize: '14px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value="Card">Credit/Debit Card</option>
+                      <option value="UPI">UPI</option>
+                      <option value="Bank Transfer">Bank Transfer</option>
+                      <option value="Cash">Cash</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#333' }}>
+                      Upload Payment Proof Screenshot
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                      style={{
+                        display: 'block',
+                        marginBottom: '10px'
+                      }}
+                    />
+                    {paymentProof && (
+                      <div style={{ marginTop: '10px' }}>
+                        <img src={paymentProof} alt="Payment Proof Preview" style={{ maxWidth: '150px', borderRadius: '4px', border: '1px solid #ddd' }} />
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={uploadingPayment || !paymentProof}
+                    style={{
+                      padding: '12px',
+                      backgroundColor: uploadingPayment || !paymentProof ? '#ccc' : '#2E1A47',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      cursor: uploadingPayment || !paymentProof ? 'not-allowed' : 'pointer',
+                      transition: 'background 0.3s'
+                    }}
+                  >
+                    {uploadingPayment ? 'Uploading...' : 'Submit Payment Proof'}
+                  </button>
+                </form>
+                )}
+
+                {orderStatus?.paymentStatus === 'Approved' && (
+                  <div style={{ padding: '15px', marginTop: '15px', backgroundColor: '#e8f5e9', color: '#2e7d32', borderRadius: '4px', border: '1px solid #66bb6a', textAlign: 'center' }}>
+                    <p style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>✓ Your payment has been approved!</p>
+                    <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>You can now access your ticket.</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
