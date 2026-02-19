@@ -14,7 +14,8 @@ const participationSchema = new mongoose.Schema({
     },
     ticketId: {
         type: String,
-        unique: true
+        unique: true,
+        sparse: true  // Allows multiple null values
     },
     qrCodeData: {
         type: String

@@ -87,22 +87,33 @@ export const registerForEvent = async (req, res) => {
     if(existing) {
       return res.status(400).json({ success: false, message: "Already registered for this event" });
     }
-    const random=Math.floor(100000 + Math.random() * 900000);
-    const ticketId=`FEL-${eventId.toString().slice(-6)}-${random}`;
-    const qrCodePayload = `Ticket ID: ${ticketId}`;
+    
+    // Only generate ticket ID and QR for non-merchandise events during registration
+    // For merchandise, ticket and QR are generated after payment approval
+    let ticketId = null;
+    let qrCodePayload = null;
     let qrCodeDataUrl = null;
-
-    try {
-      qrCodeDataUrl = await QRCode.toDataURL(qrCodePayload);
-    } catch (qrError) {
-      console.error("Failed to generate QR code data URL:", qrError.message);
+    
+    if (event.eventType !== "MERCHANDISE") {
+      const random = Math.floor(100000 + Math.random() * 900000);
+      ticketId = `FEL-${eventId.toString().slice(-6)}-${random}`;
+      qrCodePayload = `Ticket ID: ${ticketId}`;
+      try {
+        qrCodeDataUrl = await QRCode.toDataURL(qrCodePayload);
+      } catch (qrError) {
+        console.error("Failed to generate QR code data URL:", qrError.message);
+      }
     }
 
     const participationData = {
       participant: userId,
       event: eventId,
-      ticketId,
     };
+    
+    // Only add ticketId if it was generated (non-merchandise events)
+    if (ticketId) {
+      participationData.ticketId = ticketId;
+    }
 
     if (qrCodeDataUrl) {
       participationData.qrCodeData = qrCodeDataUrl;
@@ -126,10 +137,8 @@ export const registerForEvent = async (req, res) => {
     
     const user = await User.findById(userId);
     
-    // Try sending email with QR code (don't fail registration if email fails)
+    // Try sending email (don't fail registration if email fails)
     try {
-      const qrCodeBuffer = await QRCode.toBuffer(qrCodePayload);
-
       // Build email content with merchandise/custom field details
       let additionalInfo = "";
       if (merchandiseSelection) {
@@ -143,38 +152,66 @@ export const registerForEvent = async (req, res) => {
         });
       }
 
-      await sendEmail(
-        user.email, 
-        "Event Registration Confirmation", 
-        `
-          <h2>Event Registration Confirmation</h2>
-          <p>Hello ${user.firstName} ${user.lastName},</p>
-          <p>You have successfully registered for the event: <strong>${event.eventName}</strong></p>
-          <p><strong>Ticket ID:</strong> ${ticketId}</p>
-          <p><strong>Event Date:</strong> ${new Date(event.eventStartDate).toLocaleDateString()}</p>
-          ${additionalInfo}
-          <p>Please find your QR code below:</p>
-          <img src="cid:qrcode" alt="Event QR Code" style="width:200px; height:200px;" />
-          <p>Show this QR code at the event entrance.</p>
-        `,
-        [
-          {
-            filename: 'qrcode.png',
-            content: qrCodeBuffer,
-            cid: 'qrcode'
-          }
-        ]
-      );
+      // For merchandise events, send different email (no ticket/QR yet - pending payment approval)
+      if (event.eventType === "MERCHANDISE") {
+        await sendEmail(
+          user.email,
+          "Event Registration Confirmation - Payment Required",
+          `
+            <h2>Event Registration Confirmation</h2>
+            <p>Hello ${user.firstName} ${user.lastName},</p>
+            <p>You have successfully registered for the event: <strong>${event.eventName}</strong></p>
+            <p><strong>Event Date:</strong> ${new Date(event.eventStartDate).toLocaleDateString()}</p>
+            ${additionalInfo}
+            <h3>⚠️ Payment Required</h3>
+            <p>Please upload your payment proof to complete the registration.</p>
+            <p>Once your payment is approved by the organizer, you will receive your event ticket and QR code.</p>
+            <p>Thank you for registering!</p>
+          `
+        );
+      } else {
+        // For normal events, send email with QR code
+        const qrCodeBuffer = await QRCode.toBuffer(qrCodePayload);
+        
+        await sendEmail(
+          user.email,
+          "Event Registration Confirmation",
+          `
+            <h2>Event Registration Confirmation</h2>
+            <p>Hello ${user.firstName} ${user.lastName},</p>
+            <p>You have successfully registered for the event: <strong>${event.eventName}</strong></p>
+            <p><strong>Ticket ID:</strong> ${ticketId}</p>
+            <p><strong>Event Date:</strong> ${new Date(event.eventStartDate).toLocaleDateString()}</p>
+            ${additionalInfo}
+            <p>Please find your QR code below:</p>
+            <img src="cid:qrcode" alt="Event QR Code" style="width:200px; height:200px;" />
+            <p>Show this QR code at the event entrance.</p>
+          `,
+          [
+            {
+              filename: 'qrcode.png',
+              content: qrCodeBuffer,
+              cid: 'qrcode'
+            }
+          ]
+        );
+      }
     } catch (emailError) {
       console.error("Failed to send confirmation email:", emailError.message);
       // Continue anyway - registration was successful
     }
 
-    res.status(201).json({
+    const response = {
       success: true,
-      message: "Registered for event successfully",
-      ticketId
-    });
+      message: "Registered for event successfully"
+    };
+    
+    // Only include ticketId for non-merchandise events
+    if (ticketId) {
+      response.ticketId = ticketId;
+    }
+    
+    res.status(201).json(response);
   } catch (error) {
     res.status(500).json({
       success: false,
