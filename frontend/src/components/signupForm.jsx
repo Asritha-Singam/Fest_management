@@ -1,9 +1,14 @@
 import { useState } from "react";
 import {register} from "../services/authServices"
 import { useNavigate } from "react-router-dom";
+import ReCAPTCHA from "react-google-recaptcha";
+
+const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
 const SignupForm = () => {
     const navigate = useNavigate();
+    const [captchaToken, setCaptchaToken] = useState(null);
+    
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
@@ -29,7 +34,7 @@ const SignupForm = () => {
         setError("");
 
         try{
-            const response = await register(formData);
+            const response = await register(formData, captchaToken);
             // After successful registration, login and redirect to onboarding
             navigate("/login?onboarding=true");
         }catch(err){
@@ -55,7 +60,10 @@ const SignupForm = () => {
                 <input name="collegeOrOrg" placeholder="College/Organization" onChange={handleChange} required />
                 <input name="contactNumber" placeholder="Contact Number" onChange={handleChange} required />
                 <input name="interests" placeholder="Interests (comma separated)" onChange={handleChange} />
-
+                <ReCAPTCHA
+                    sitekey={siteKey}
+                    onChange={(token) => setCaptchaToken(token)}
+                />
                 <button type="submit">Register</button>
             </form>
         </div>

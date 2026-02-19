@@ -2,11 +2,16 @@ import { useState, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { login as loginAPI } from "../services/authServices.js";
 import { AuthContext } from "../context/AuthContext.jsx";
+import ReCAPTCHA from "react-google-recaptcha";
+
+const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [captchaToken, setCaptchaToken] = useState(null);
+
 
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -17,7 +22,8 @@ const LoginForm = () => {
     setError("");
 
     try {
-      const response = await loginAPI({ email, password });
+      const response = await loginAPI({ email, password, captchaToken });
+      
       const { token, role } = response.data;
 
       login(token, role);
@@ -60,7 +66,11 @@ const LoginForm = () => {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-
+        <ReCAPTCHA
+          sitekey={siteKey}
+          onChange={(token) => setCaptchaToken(token)}
+        />
+  
         <button type="submit">Login</button>
       </form>
     </div>

@@ -19,11 +19,26 @@
 
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import axios from "axios";
 import User from "../models/User.js";
 import Participant from "../models/participant.js";
 
 export const registerParticipant = async (req, res) => {
     try {
+        const verify = await axios.post(
+        "https://www.google.com/recaptcha/api/siteverify",
+        null,
+        {
+            params: {
+                secret: process.env.RECAPTCHA_SECRET_KEY,
+                response: req.body.captchaToken
+            }
+        }
+        );
+
+        if (!verify.data.success) {
+            return res.status(400).json({ message: "Captcha failed" });
+        }
         const { firstName, lastName, email, password, participantType, collegeOrOrg, contactNumber, interests } = req.body;
         if (!firstName || !lastName || !email || !password || !participantType || !collegeOrOrg || !contactNumber) {
             return res.status(400).json({ message: "All fields are required" });
@@ -65,6 +80,21 @@ export const registerParticipant = async (req, res) => {
 };
 export const loginUser = async (req, res) => {
     try {
+        const verify = await axios.post(
+        "https://www.google.com/recaptcha/api/siteverify",
+        null,
+        {
+            params: {
+                secret: process.env.RECAPTCHA_SECRET_KEY,
+                response: req.body.captchaToken
+            }
+        }
+        );
+
+        if (!verify.data.success) {
+            return res.status(400).json({ message: "Captcha failed" });
+        }
+
         const { email, password } =req.body;
 
         if (!email || !password) {
