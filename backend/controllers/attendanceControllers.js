@@ -3,6 +3,18 @@ import Event from '../models/events.js';
 import User from '../models/User.js';
 import { decodeQRData, verifyQRData } from '../utils/qrCodeUtils.js';
 
+const getDisplayName = (user) => {
+    if (!user) {
+        return '';
+    }
+
+    const first = user.firstName || '';
+    const last = user.lastName || '';
+    const full = `${first} ${last}`.trim();
+
+    return full || user.email || '';
+};
+
 // Scan QR Code and Mark Attendance
 export const scanQRCode = async (req, res) => {
     try {
@@ -35,13 +47,13 @@ export const scanQRCode = async (req, res) => {
             });
         }
 
-        const { ticketId, participantEmail } = decodedData;
+        const { ticketId, participantEmail, participantName } = decodedData;
 
         // Find the participation record
         const participation = await Participation.findOne({ 
             ticketId: ticketId 
-        }).populate('participant', 'name email')
-          .populate('event', 'name date organizer');
+                }).populate('participant', 'firstName lastName email')
+                    .populate('event', 'name date organizer');
 
         if (!participation) {
             return res.status(404).json({ 
@@ -110,11 +122,14 @@ export const scanQRCode = async (req, res) => {
 
         await participation.save();
 
+        const fallbackName = getDisplayName(participation.participant);
+        const resolvedName = participantName || fallbackName;
+
         return res.status(200).json({
             success: true,
             message: 'Check-in successful',
             data: {
-                participantName: participation.participant.name,
+                participantName: resolvedName,
                 participantEmail: participation.participant.email,
                 eventName: participation.event.name,
                 checkInTime: participation.checkInTime,
@@ -153,7 +168,7 @@ export const manualCheckIn = async (req, res) => {
 
         // Find participation
         const participation = await Participation.findById(participationId)
-            .populate('participant', 'name email')
+            .populate('participant', 'firstName lastName email')
             .populate('event', 'name organizer');
 
         if (!participation) {
@@ -191,7 +206,7 @@ export const manualCheckIn = async (req, res) => {
             success: true,
             message: wasAlreadyCheckedIn ? 'Manual override successful' : 'Manual check-in successful',
             data: {
-                participantName: participation.participant.name,
+                participantName: getDisplayName(participation.participant),
                 participantEmail: participation.participant.email,
                 eventName: participation.event.name,
                 checkInTime: participation.checkInTime,
@@ -236,8 +251,8 @@ export const getAttendanceDashboard = async (req, res) => {
             status: { $ne: 'Cancelled' },
             paymentStatus: { $in: ['Paid', 'Not Required'] }
         })
-        .populate('participant', 'name email')
-        .populate('checkInBy', 'name')
+        .populate('participant', 'firstName lastName email')
+        .populate('checkInBy', 'firstName lastName email')
         .sort({ checkInTime: -1 });
 
         // Calculate statistics
@@ -249,12 +264,12 @@ export const getAttendanceDashboard = async (req, res) => {
         // Format participant list
         const participantList = participations.map(p => ({
             id: p._id,
-            participantName: p.participant.name,
+            participantName: getDisplayName(p.participant),
             participantEmail: p.participant.email,
             ticketId: p.ticketId,
             attendanceStatus: p.attendanceStatus,
             checkInTime: p.checkInTime,
-            checkInByName: p.checkInBy ? p.checkInBy.name : null,
+            checkInByName: p.checkInBy ? getDisplayName(p.checkInBy) : null,
             manualOverride: p.manualOverride,
             overrideReason: p.overrideReason
         }));
@@ -293,9 +308,9 @@ export const getParticipationStatus = async (req, res) => {
         const userId = req.user.id;
 
         const participation = await Participation.findById(participationId)
-            .populate('participant', 'name email')
+            .populate('participant', 'firstName lastName email')
             .populate('event', 'name date organizer')
-            .populate('checkInBy', 'name');
+            .populate('checkInBy', 'firstName lastName email');
 
         if (!participation) {
             return res.status(404).json({ 
@@ -318,11 +333,11 @@ export const getParticipationStatus = async (req, res) => {
         return res.status(200).json({
             success: true,
             data: {
-                participantName: participation.participant.name,
+                participantName: getDisplayName(participation.participant),
                 eventName: participation.event.name,
                 attendanceStatus: participation.attendanceStatus,
                 checkInTime: participation.checkInTime,
-                checkInBy: participation.checkInBy ? participation.checkInBy.name : null,
+                checkInBy: participation.checkInBy ? getDisplayName(participation.checkInBy) : null,
                 manualOverride: participation.manualOverride
             }
         });
@@ -364,8 +379,8 @@ export const exportAttendanceCSV = async (req, res) => {
             status: { $ne: 'Cancelled' },
             paymentStatus: { $in: ['Paid', 'Not Required'] }
         })
-        .populate('participant', 'name email phone')
-        .populate('checkInBy', 'name')
+        .populate('participant', 'firstName lastName email')
+        .populate('checkInBy', 'firstName lastName email')
         .sort({ checkInTime: -1 });
 
         // Generate CSV content
@@ -375,10 +390,10 @@ export const exportAttendanceCSV = async (req, res) => {
             const checkInTime = p.checkInTime 
                 ? new Date(p.checkInTime).toLocaleString() 
                 : 'N/A';
-            const checkInBy = p.checkInBy ? p.checkInBy.name : 'N/A';
-            const phone = p.participant.phone || 'N/A';
+            const checkInBy = p.checkInBy ? getDisplayName(p.checkInBy) : 'N/A';
+            const phone = 'N/A';
             
-            return `"${p.ticketId || 'N/A'}","${p.participant.name}","${p.participant.email}","${phone}","${p.attendanceStatus}","${checkInTime}","${checkInBy}","${p.manualOverride ? 'Yes' : 'No'}","${p.overrideReason || 'N/A'}"`;
+            return `"${p.ticketId || 'N/A'}","${getDisplayName(p.participant)}","${p.participant.email}","${phone}","${p.attendanceStatus}","${checkInTime}","${checkInBy}","${p.manualOverride ? 'Yes' : 'No'}","${p.overrideReason || 'N/A'}"`;
         }).join('\n');
 
         const csv = csvHeader + csvRows;

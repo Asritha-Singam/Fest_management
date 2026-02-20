@@ -113,6 +113,7 @@ export const registerForEvent = async (req, res) => {
       qrCodeData = {
         ticketId: ticketId,
         participantEmail: user.email,
+        participantName: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
         eventName: event.eventName,
         generatedAt: new Date().toISOString(),
         valid: true
@@ -172,20 +173,48 @@ export const registerForEvent = async (req, res) => {
 
       // For merchandise events, send different email (no ticket/QR yet - pending payment approval)
       if (event.eventType === "MERCHANDISE") {
+        // Build simplified HTML for better Gmail compatibility
+        let emailHTML = `
+          <h2>Event Registration Confirmation</h2>
+          <p>Hello ${user.firstName} ${user.lastName},</p>
+          <p>You have successfully registered for the event: <strong>${event.eventName}</strong></p>
+          <p><strong>Event Date:</strong> ${new Date(event.eventStartDate).toLocaleDateString()}</p>
+        `;
+        
+        if (merchandiseSelection) {
+          emailHTML += `
+            <h3>Your Merchandise Selection:</h3>
+            <p><strong>Size:</strong> ${merchandiseSelection.size}</p>
+            <p><strong>Color:</strong> ${merchandiseSelection.color}</p>
+          `;
+        }
+        
+        if (customFieldResponses && customFieldResponses.length > 0) {
+          emailHTML += `<h3>Your Registration Details:</h3>`;
+          customFieldResponses.forEach(field => {
+            emailHTML += `<p><strong>${field.fieldName}:</strong> ${field.fieldValue}</p>`;
+          });
+        }
+        
+        emailHTML += `
+          <h3>Payment Required</h3>
+          <p>Please upload your payment proof to complete your registration.</p>
+          <p>Once your payment is approved by the organizer, you will receive your event ticket and QR code via email.</p>
+          <p>Thank you for registering!</p>
+        `;
+
         await sendEmail(
           user.email,
-          "Event Registration Confirmation - Payment Required",
-          `
-            <h2>Event Registration Confirmation</h2>
-            <p>Hello ${user.firstName} ${user.lastName},</p>
-            <p>You have successfully registered for the event: <strong>${event.eventName}</strong></p>
-            <p><strong>Event Date:</strong> ${new Date(event.eventStartDate).toLocaleDateString()}</p>
-            ${additionalInfo}
-            <h3>⚠️ Payment Required</h3>
-            <p>Please upload your payment proof to complete the registration.</p>
-            <p>Once your payment is approved by the organizer, you will receive your event ticket and QR code.</p>
-            <p>Thank you for registering!</p>
-          `
+          `${event.eventName} - Payment Required - Reg #${participation._id.toString().slice(-6)}`,
+          emailHTML,
+          [],
+          {
+            "X-Entity-Ref-ID": `payment-required-${participation._id}`,
+            "Precedence": "bulk",
+            "List-ID": `<${event._id}@event-registration>`,
+            "X-Priority": "3",
+            "X-MSMail-Priority": "Normal"
+          }
         );
       } else {
         // For normal events, send email with QR code
@@ -193,7 +222,7 @@ export const registerForEvent = async (req, res) => {
         
         await sendEmail(
           user.email,
-          "Event Registration Confirmation",
+          `${event.eventName} - Your Event Ticket ${ticketId}`,
           `
             <h2>Event Registration Confirmation</h2>
             <p>Hello ${user.firstName} ${user.lastName},</p>
@@ -211,7 +240,13 @@ export const registerForEvent = async (req, res) => {
               content: qrCodeBuffer,
               cid: 'qrcode'
             }
-          ]
+          ],
+          {
+            "X-Entity-Ref-ID": `qr-code-${participation._id}`,
+            "Precedence": "bulk",
+            "List-ID": `<${event._id}@event-registration>`,
+            "X-Priority": "3"
+          }
         );
       }
     } catch (emailError) {

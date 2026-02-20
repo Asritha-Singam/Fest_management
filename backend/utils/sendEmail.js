@@ -15,7 +15,7 @@ const getTransporter = () => {
     });
 };
 
-export const sendEmail = async (to, subject, htmlContent, attachments = []) => {
+export const sendEmail = async (to, subject, htmlContent, attachments = [], headers = {}) => {
     const transporter = getTransporter();
     await transporter.sendMail({
         from: process.env.EMAIL_USER,
@@ -23,5 +23,6 @@ export const sendEmail = async (to, subject, htmlContent, attachments = []) => {
         subject,
         html: htmlContent,
         attachments,
+        headers,
     });
 };

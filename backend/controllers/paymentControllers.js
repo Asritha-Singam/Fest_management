@@ -209,6 +209,7 @@ export const approvePayment = async (req, res) => {
         const qrCodeData = {
             ticketId: ticketId,
             participantEmail: participant.email,
+            participantName: `${participant.firstName || ""} ${participant.lastName || ""}`.trim(),
             eventName: event.eventName,
             generatedAt: new Date().toISOString(),
             valid: true
@@ -241,35 +242,46 @@ export const approvePayment = async (req, res) => {
             { new: true }
         );
 
-        // Send approval email with QR code
+        // Send approval email with QR code using base64 data URI (Gmail compatible)
         try {
-            await sendEmail(
-                participant.email,
-                "Payment Approved - Event Ticket",
-                `
-                    <h2>Payment Approved!</h2>
-                    <p>Hello ${participant.firstName} ${participant.lastName},</p>
-                    <p>Your payment for <strong>${event.eventName}</strong> has been approved!</p>
-                    <p><strong>Order ID:</strong> ${order._id}</p>
-                    <p><strong>Ticket ID:</strong> ${ticketId}</p>
-                    <p><strong>Amount Paid:</strong> ₹${payment.amount}</p>
-                    <p><strong>Event Date:</strong> ${new Date(event.eventStartDate).toLocaleDateString()}</p>
-                    <p>Please find your event QR code below:</p>
-                    <img src="cid:qrcode" alt="Event QR Code" style="width:200px; height:200px;" />
-                    <p>Show this QR code at the event entrance.</p>
-                    <p>Thank you for your registration!</p>
-                `,
-                [
-                    {
-                        filename: 'qrcode.png',
-                        content: qrCodeBuffer,
-                        cid: 'qrcode'
-                    }
-                ]
-            );
+          // Generate base64 data URI for QR code (better Gmail compatibility than CID)
+          const qrBase64 = qrCodeBuffer.toString('base64');
+          const qrDataUri = `data:image/png;base64,${qrBase64}`;
+
+          await sendEmail(
+            participant.email,
+            `${event.eventName} - Payment Approved & Ticket ${ticketId}`,
+            `
+              <h2>Payment Approved!</h2>
+              <p>Hello ${participant.firstName} ${participant.lastName},</p>
+              <p>Your payment for <strong>${event.eventName}</strong> has been approved!</p>
+              <p><strong>Order ID:</strong> ${order._id}</p>
+              <p><strong>Ticket ID:</strong> ${ticketId}</p>
+              <p><strong>Amount Paid:</strong> ₹${payment.amount}</p>
+              <p><strong>Event Date:</strong> ${new Date(event.eventStartDate).toLocaleDateString()}</p>
+              <p>Please find your event QR code below:</p>
+              <img src="cid:qrcode" alt="Event QR Code" style="width:200px; height:200px;" />
+              <p>Show this QR code at the event entrance.</p>
+              <p>Thank you for your registration!</p>
+            `,
+            [
+              {
+                filename: 'qrcode.png',
+                content: qrCodeBuffer,
+                cid: 'qrcode'
+              }
+            ],
+            {
+              "X-Entity-Ref-ID": `payment-approved-${paymentId}`,
+              "Precedence": "bulk",
+              "List-ID": `<${event._id}@event-registration>`,
+              "X-Priority": "3",
+              "X-MSMail-Priority": "Normal"
+            }
+          );
         } catch (emailError) {
-            console.error("Failed to send approval email:", emailError);
-            // Don't fail the approval if email fails
+          console.error("Failed to send approval email:", emailError);
+          // Don't fail the approval if email fails
         }
 
         // Log event

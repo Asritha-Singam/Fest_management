@@ -47,7 +47,7 @@ export const registerParticipant = async (req, res) => {
             return res.status(400).json({ message: "All fields are required" });
         }
         if (participantType === "IIIT") {
-            const iiitEmailPattern = /@.+\.iiit\.ac\.in$/;
+            const iiitEmailPattern = /@(?:[\w-]+\.)?iiit\.ac\.in$/;
             if (!iiitEmailPattern.test(email)) {
                 return res.status(400).json({ message: "IIIT participants must have an @[something].iiit.ac.in email" });
             }
@@ -75,7 +75,17 @@ export const registerParticipant = async (req, res) => {
             interests
         });
 
-        return res.status(201).json({ message: "Participant registered successfully" });
+        const token = jwt.sign(
+            { userId: user._id, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRES_IN }
+        );
+
+        return res.status(201).json({
+            message: "Participant registered successfully",
+            token,
+            role: user.role,
+        });
     } catch (error) {
         console.error("Error registering participant:", error);
         return res.status(500).json({ message: "Server error" });

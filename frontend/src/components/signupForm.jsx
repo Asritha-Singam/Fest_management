@@ -1,12 +1,14 @@
-import { useState } from "react";
-import {register} from "../services/authServices"
+import { useState, useContext } from "react";
+import { register } from "../services/authServices";
 import { useNavigate } from "react-router-dom";
 import ReCAPTCHA from "react-google-recaptcha";
+import { AuthContext } from "../context/AuthContext.jsx";
 
 const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
 const SignupForm = () => {
     const navigate = useNavigate();
+    const { login } = useContext(AuthContext);
     const [captchaToken, setCaptchaToken] = useState(null);
     
     const [formData, setFormData] = useState({
@@ -41,8 +43,15 @@ const SignupForm = () => {
 
         try{
             const response = await register({ ...formData, captchaToken });
-            // After successful registration, login and redirect to onboarding
-            navigate("/login?onboarding=true");
+            const { token, role } = response.data;
+
+            if (token && role) {
+                login(token, role);
+                navigate("/onboarding");
+                return;
+            }
+
+            navigate("/login");
         }catch(err){
             setError(err.response?.data?.message || "Registration failed");
         }

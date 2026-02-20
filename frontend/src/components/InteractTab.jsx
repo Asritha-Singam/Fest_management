@@ -16,6 +16,24 @@ const InteractTab = ({ eventId, socket, isOrganizer }) => {
   const [repliesOpen, setRepliesOpen] = useState({});
   const [replyingTo, setReplyingTo] = useState(null);
 
+  const uniqueById = (items) => {
+    const seen = new Set();
+    const unique = [];
+
+    for (const item of items) {
+      if (!item || !item._id) {
+        continue;
+      }
+
+      if (!seen.has(item._id)) {
+        seen.add(item._id);
+        unique.push(item);
+      }
+    }
+
+    return unique;
+  };
+
   useEffect(() => {
     fetchMessages();
   }, [eventId, page]);
@@ -24,22 +42,38 @@ const InteractTab = ({ eventId, socket, isOrganizer }) => {
     // Socket.IO listener for new messages
     if (socket) {
       socket.on("new-message", (newMessage) => {
-        if (newMessage.eventId === eventId) {
-          if (!newMessage.parentMessageId) {
-            setMessages(prev => [newMessage, ...prev]);
-          } else {
-            setMessages(prev =>
-              prev.map(msg =>
-                msg._id === newMessage.parentMessageId
-                  ? {
-                      ...msg,
-                      replies: msg.replies ? [...msg.replies, newMessage] : [newMessage]
-                    }
-                  : msg
-              )
-            );
-          }
+        if (newMessage.eventId !== eventId) {
+          return;
         }
+
+        if (!newMessage.parentMessageId) {
+          setMessages(prev => {
+            if (prev.some(m => m._id === newMessage._id)) {
+              return prev;
+            }
+
+            return [newMessage, ...prev];
+          });
+          return;
+        }
+
+        setMessages(prev =>
+          prev.map(msg => {
+            if (msg._id !== newMessage.parentMessageId) {
+              return msg;
+            }
+
+            const replies = msg.replies || [];
+            if (replies.some(reply => reply._id === newMessage._id)) {
+              return msg;
+            }
+
+            return {
+              ...msg,
+              replies: [...replies, newMessage]
+            };
+          })
+        );
       });
 
       socket.on("message-deleted", (data) => {
@@ -94,22 +128,44 @@ const InteractTab = ({ eventId, socket, isOrganizer }) => {
       });
 
       socket.on("message-pinned", (data) => {
-        if (data.eventId === eventId) {
-          if (data.isPinned) {
-            // Move to pinned
-            setMessages(prev => {
-              const msgToPin = prev.find(m => m._id === data.messageId);
-              setPinnedMessages(prevPinned => msgToPin ? [{ ...msgToPin, isPinned: true }, ...prevPinned] : prevPinned);
-              return prev.filter(msg => msg._id !== data.messageId);
-            });
-          } else {
-            // Move from pinned
-            setPinnedMessages(prev => {
-              const msgToUnpin = prev.find(m => m._id === data.messageId);
-              setMessages(prevMsgs => msgToUnpin ? [{ ...msgToUnpin, isPinned: false }, ...prevMsgs] : prevMsgs);
-              return prev.filter(msg => msg._id !== data.messageId);
-            });
-          }
+        if (data.eventId !== eventId) return;
+
+        if (data.isPinned) {
+          setMessages(prev => {
+            const msgToPin = prev.find(m => m._id === data.messageId);
+
+            if (msgToPin) {
+              setPinnedMessages(prevPinned => {
+                const nextPinned = prevPinned.some(m => m._id === data.messageId)
+                  ? prevPinned.map(m =>
+                      m._id === data.messageId ? { ...m, isPinned: true } : m
+                    )
+                  : [{ ...msgToPin, isPinned: true }, ...prevPinned];
+
+                return uniqueById(nextPinned);
+              });
+            }
+
+            return prev.filter(msg => msg._id !== data.messageId);
+          });
+        } else {
+          setPinnedMessages(prev => {
+            const msgToUnpin = prev.find(m => m._id === data.messageId);
+
+            if (msgToUnpin) {
+              setMessages(prevMsgs => {
+                const nextMessages = prevMsgs.some(m => m._id === data.messageId)
+                  ? prevMsgs.map(m =>
+                      m._id === data.messageId ? { ...m, isPinned: false } : m
+                    )
+                  : [{ ...msgToUnpin, isPinned: false }, ...prevMsgs];
+
+                return uniqueById(nextMessages);
+              });
+            }
+
+            return prev.filter(msg => msg._id !== data.messageId);
+          });
         }
       });
 
@@ -131,10 +187,10 @@ const InteractTab = ({ eventId, socket, isOrganizer }) => {
       );
 
       if (page === 1) {
-        setPinnedMessages(response.data.pinnedMessages || []);
-        setMessages(response.data.messages);
+        setPinnedMessages(uniqueById(response.data.pinnedMessages || []));
+        setMessages(uniqueById(response.data.messages || []));
       } else {
-        setMessages(prev => [...prev, ...response.data.messages]);
+        setMessages(prev => uniqueById([...prev, ...(response.data.messages || [])]));
       }
       setHasMore(response.data.hasMore);
       setError("");
@@ -278,19 +334,40 @@ const InteractTab = ({ eventId, socket, isOrganizer }) => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      const useRealtime = Boolean(socket && socket.connected);
+      if (useRealtime) {
+        return;
+      }
+
       const isPinned = response.data.data.isPinned;
       const messageToMove = messages.find(m => m._id === messageId);
 
       if (isPinned && messageToMove) {
         // Moving from messages to pinnedMessages
         setMessages(prev => prev.filter(msg => msg._id !== messageId));
-        setPinnedMessages(prev => [{ ...messageToMove, isPinned: true }, ...prev]);
+        setPinnedMessages(prev => {
+          const nextPinned = prev.some(m => m._id === messageId)
+            ? prev.map(m =>
+                m._id === messageId ? { ...m, isPinned: true } : m
+              )
+            : [{ ...messageToMove, isPinned: true }, ...prev];
+
+          return uniqueById(nextPinned);
+        });
       } else if (!isPinned) {
         // Moving from pinnedMessages back to messages
         const pinnedMsg = pinnedMessages.find(m => m._id === messageId);
         if (pinnedMsg) {
           setPinnedMessages(prev => prev.filter(msg => msg._id !== messageId));
-          setMessages(prev => [{ ...pinnedMsg, isPinned: false }, ...prev]);
+          setMessages(prev => {
+            const nextMessages = prev.some(m => m._id === messageId)
+              ? prev.map(m =>
+                  m._id === messageId ? { ...m, isPinned: false } : m
+                )
+              : [{ ...pinnedMsg, isPinned: false }, ...prev];
+
+            return uniqueById(nextMessages);
+          });
         }
       }
     } catch (err) {
