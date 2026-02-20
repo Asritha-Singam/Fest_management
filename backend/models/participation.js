@@ -34,6 +34,42 @@ const participationSchema = new mongoose.Schema({
         enum: ["Not Required", "Pending", "Paid"],
         default: "Not Required"
     },
+    // Attendance tracking fields
+    attendanceStatus: {
+        type: String,
+        enum: ["not-scanned", "checked-in"],
+        default: "not-scanned"
+    },
+    checkInTime: {
+        type: Date,
+        default: null
+    },
+    checkInBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: null
+    },
+    scanCount: {
+        type: Number,
+        default: 0
+    },
+    manualOverride: {
+        type: Boolean,
+        default: false
+    },
+    overrideReason: {
+        type: String,
+        default: null
+    },
+    overrideBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: null
+    },
+    overrideTimestamp: {
+        type: Date,
+        default: null
+    },
     // For merchandise events
     merchandiseSelection: {
         size: String,

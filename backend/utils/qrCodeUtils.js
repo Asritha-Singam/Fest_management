@@ -72,3 +72,41 @@ export const generateTicket = async (orderId, participantEmail, eventName) => {
         throw error;
     }
 };
+
+// Decode QR code data
+export const decodeQRData = (qrData) => {
+    try {
+        // QR data is already JSON string, just parse it
+        const decoded = typeof qrData === 'string' ? JSON.parse(qrData) : qrData;
+        
+        // Validate required fields
+        if (!decoded.ticketId || !decoded.participantEmail || !decoded.eventName) {
+            throw new Error('Missing required fields in QR data');
+        }
+        
+        return decoded;
+    } catch (error) {
+        console.error('Error decoding QR data:', error.message);
+        throw new Error('Invalid QR code data format');
+    }
+};
+
+// Verify QR data authenticity and validity
+export const verifyQRData = (decodedData) => {
+    try {
+        // Check if QR data has required fields
+        if (!decodedData.ticketId || !decodedData.participantEmail) {
+            return false;
+        }
+
+        // Check if marked as valid
+        if (decodedData.valid !== true) {
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Error verifying QR data:', error);
+        return false;
+    }
+};

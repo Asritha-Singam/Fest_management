@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useContext } from "react";
 import OrganizerNavbar from "../../components/organizerNavbar";
 import { AuthContext } from "../../context/AuthContext";
@@ -7,6 +7,7 @@ import ForumButton from "../../components/ForumButton";
 
 const OrganizerEventDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { token } = useContext(AuthContext);
 
   const [event, setEvent] = useState(null);
@@ -159,11 +160,57 @@ const OrganizerEventDetail = () => {
           <p><strong>Registration Limit:</strong> {event.registrationLimit || "Unlimited"}</p>
         </div>
 
-      {event.status !== "completed" && (
-        <button onClick={() => setEditMode(!editMode)} style={{ padding: "10px 20px", backgroundColor: editMode ? "#6c757d" : "#2E1A47", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", marginBottom: "20px" }}>
-          {editMode ? "Cancel" : "Edit Event"}
-        </button>
-      )}
+      {/* Action Buttons */}
+      <div style={{ display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap" }}>
+        {event.status !== "completed" && (
+          <button 
+            onClick={() => setEditMode(!editMode)} 
+            style={{ 
+              padding: "10px 20px", 
+              backgroundColor: editMode ? "#6c757d" : "#2E1A47", 
+              color: "white", 
+              border: "none", 
+              borderRadius: "6px", 
+              cursor: "pointer" 
+            }}
+          >
+            {editMode ? "Cancel" : "Edit Event"}
+          </button>
+        )}
+        
+        {(event.status === "published" || event.status === "ongoing") && (
+          <button 
+            onClick={() => navigate(`/organizer/events/${id}/attendance`)}
+            style={{ 
+              padding: "10px 20px", 
+              backgroundColor: "#4CAF50", 
+              color: "white", 
+              border: "none", 
+              borderRadius: "6px", 
+              cursor: "pointer",
+              fontWeight: "600"
+            }}
+          >
+            📷 Attendance Tracking
+          </button>
+        )}
+
+        {event.status === "draft" && (
+          <button 
+            onClick={handlePublish} 
+            style={{ 
+              padding: "10px 20px", 
+              backgroundColor: "#007bff", 
+              color: "white", 
+              border: "none", 
+              borderRadius: "6px", 
+              cursor: "pointer" 
+            }}
+          >
+            Publish Event
+          </button>
+        )}
+      </div>
 
       {editMode && (
         <div style={{ marginTop: "20px", padding: "20px", border: "1px solid #ddd", borderRadius: "5px", backgroundColor: "#f9f9f9" }}>
@@ -330,10 +377,6 @@ const OrganizerEventDetail = () => {
           </button>
 
         </div>
-      )}
-
-      {event.status === "draft" && (
-        <button onClick={handlePublish} style={{ padding: "10px 20px", backgroundColor: "#007bff", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", marginBottom: "20px" }}>Publish Event</button>
       )}
 
       {/* Analytics Section */}

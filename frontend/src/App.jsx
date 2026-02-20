@@ -20,6 +20,7 @@ import OrganizerEventDetail from "./pages/organizer/organizerEventDetail";
 import CreateEvent from "./pages/organizer/createEvent";
 import OrganizerProfile from "./pages/organizer/organizerProfile";
 import OngoingEvents from "./pages/organizer/ongoingEvents";
+import EventAttendance from "./pages/organizer/eventAttendance";
 import AdminDashboardComponent from "./pages/admin/adminDashboard";
 import CreateOrganizer from "./pages/admin/createOrganizer";
 import PasswordResetRequests from "./pages/admin/passwordResetRequests";
@@ -139,6 +140,11 @@ function AppContent() {
                     <Route path="/organizer/profile" element={
                         <ProtectedRoute allowedRoles={["organizer"]}>
                             <OrganizerProfile />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/organizer/events/:id/attendance" element={
+                        <ProtectedRoute allowedRoles={["organizer"]}>
+                            <EventAttendance />
                         </ProtectedRoute>
                     } />
                     <Route path="/admin/dashboard" element={

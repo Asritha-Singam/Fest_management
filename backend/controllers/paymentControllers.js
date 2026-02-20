@@ -205,14 +205,21 @@ export const approvePayment = async (req, res) => {
             participation.ticketId = ticketId;
         }
 
-        // Generate QR code for the ticket
-        const qrCodePayload = `Ticket ID: ${ticketId}`;
+        // Generate QR code for the ticket with JSON format for attendance scanner
+        const qrCodeData = {
+            ticketId: ticketId,
+            participantEmail: participant.email,
+            eventName: event.eventName,
+            generatedAt: new Date().toISOString(),
+            valid: true
+        };
+        
         let qrCodeDataUrl = null;
         let qrCodeBuffer = null;
 
         try {
-            qrCodeDataUrl = await QRCode.toDataURL(qrCodePayload);
-            qrCodeBuffer = await QRCode.toBuffer(qrCodePayload);
+            qrCodeDataUrl = await QRCode.toDataURL(JSON.stringify(qrCodeData));
+            qrCodeBuffer = await QRCode.toBuffer(JSON.stringify(qrCodeData));
             
             // Update participation with ticket ID and QR code
             participation.qrCodeData = qrCodeDataUrl;

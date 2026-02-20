@@ -8,6 +8,11 @@ import bcrypt from "bcrypt";
 
 export const registerForEvent = async (req, res) => {
   try {
+    console.log("=== Registration Request ===");
+    console.log("User ID:", req.user?.id);
+    console.log("Event ID:", req.params.eventId);
+    console.log("Request Body:", JSON.stringify(req.body, null, 2));
+    
     const userId = req.user.id; // from JWT middleware
     const { eventId } = req.params;
     const { merchandiseSelection, customFieldResponses } = req.body;
@@ -88,18 +93,33 @@ export const registerForEvent = async (req, res) => {
       return res.status(400).json({ success: false, message: "Already registered for this event" });
     }
     
+    // Get user details for QR code and email
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    
     // Only generate ticket ID and QR for non-merchandise events during registration
     // For merchandise, ticket and QR are generated after payment approval
     let ticketId = null;
-    let qrCodePayload = null;
+    let qrCodeData = null;
     let qrCodeDataUrl = null;
     
     if (event.eventType !== "MERCHANDISE") {
       const random = Math.floor(100000 + Math.random() * 900000);
       ticketId = `FEL-${eventId.toString().slice(-6)}-${random}`;
-      qrCodePayload = `Ticket ID: ${ticketId}`;
+      
+      // Create QR code data in the format expected by attendance scanner
+      qrCodeData = {
+        ticketId: ticketId,
+        participantEmail: user.email,
+        eventName: event.eventName,
+        generatedAt: new Date().toISOString(),
+        valid: true
+      };
+      
       try {
-        qrCodeDataUrl = await QRCode.toDataURL(qrCodePayload);
+        qrCodeDataUrl = await QRCode.toDataURL(JSON.stringify(qrCodeData));
       } catch (qrError) {
         console.error("Failed to generate QR code data URL:", qrError.message);
       }
@@ -135,8 +155,6 @@ export const registerForEvent = async (req, res) => {
 
     await event.save();
     
-    const user = await User.findById(userId);
-    
     // Try sending email (don't fail registration if email fails)
     try {
       // Build email content with merchandise/custom field details
@@ -171,7 +189,7 @@ export const registerForEvent = async (req, res) => {
         );
       } else {
         // For normal events, send email with QR code
-        const qrCodeBuffer = await QRCode.toBuffer(qrCodePayload);
+        const qrCodeBuffer = await QRCode.toBuffer(JSON.stringify(qrCodeData));
         
         await sendEmail(
           user.email,
@@ -213,6 +231,31 @@ export const registerForEvent = async (req, res) => {
     
     res.status(201).json(response);
   } catch (error) {
+    console.error("=== Registration Error ===");
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
+
+    // Handle MongoDB duplicate key error (E11000)
+    if (error.code === 11000) {
+      // Check if it's a duplicate registration
+      const existingReg = await Participation.findOne({ 
+        participant: req.user.id, 
+        event: req.params.eventId 
+      });
+      
+      if (existingReg) {
+        return res.status(400).json({
+          success: false,
+          message: "You are already registered for this event"
+        });
+      }
+      
+      return res.status(400).json({
+        success: false,
+        message: "Registration error: Duplicate entry detected. Please try again."
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: "Error registering for event",

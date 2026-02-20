@@ -11,6 +11,7 @@ import organizerRoutes from './routes/organizerRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import forumRoutes from './routes/forumRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
+import attendanceRoutes from './routes/attendanceRoutes.js';
 import { generalRateLimiter } from './middleware/securityMiddleware.js';
 
 const app = express();
@@ -51,4 +52,6 @@ app.use('/api/organizer', organizerRoutes);
 app.use('/api/admin', adminRoutes);
 //payments
 app.use('/api/payments', paymentRoutes);
+//attendance
+app.use('/api/attendance', attendanceRoutes);
 export default app;
