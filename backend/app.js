@@ -54,4 +54,10 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/payments', paymentRoutes);
 //attendance
 app.use('/api/attendance', attendanceRoutes);
+
+// Health check endpoint
+app.get("/", (req, res) => {
+  res.send("Backend is running");
+});
+
 export default app;
