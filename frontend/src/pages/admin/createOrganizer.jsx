@@ -47,7 +47,7 @@ const CreateOrganizer = () => {
     try {
       setLoading(true);
       const response = await api.post(
-        "/admin/organizers",
+        "/api/admin/organizers",
         {
           firstName: formData.firstName,
           lastName: formData.lastName,

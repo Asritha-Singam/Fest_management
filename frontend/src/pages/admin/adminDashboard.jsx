@@ -33,7 +33,7 @@ const AdminDashboard = () => {
     if (window.confirm(`Archive ${name}? They will not be able to log in.`)) {
       try {
         await api.patch(
-          `/admin/organizers/${id}/disable`,
+          `/api/admin/organizers/${id}/disable`,
           { isActive: false },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -50,7 +50,7 @@ const AdminDashboard = () => {
     if (window.confirm(`Reactivate ${name}? They will be able to log in again.`)) {
       try {
         await api.patch(
-          `/admin/organizers/${id}/disable`,
+          `/api/admin/organizers/${id}/disable`,
           { isActive: true },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -67,7 +67,7 @@ const AdminDashboard = () => {
     if (window.confirm(`PERMANENTLY DELETE ${name}? This cannot be undone. All their events and data will be deleted.`)) {
       try {
         await api.delete(
-          `/admin/organizers/${id}`,
+          `/api/admin/organizers/${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         fetchOrganizers();

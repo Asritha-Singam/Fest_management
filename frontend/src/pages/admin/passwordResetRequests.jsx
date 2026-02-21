@@ -53,7 +53,7 @@ const PasswordResetRequests = () => {
       try {
         const comment = window.prompt("Add a comment for the organizer (optional):");
         const response = await api.patch(
-          `/admin/password-reset-requests/${requestId}/approve`,
+          `/api/admin/password-reset-requests/${requestId}/approve`,
           { comment: comment || null },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -73,7 +73,7 @@ const PasswordResetRequests = () => {
       try {
         const comment = window.prompt("Add a comment for the organizer (optional):");
         await api.patch(
-          `/admin/password-reset-requests/${requestId}/reject`,
+          `/api/admin/password-reset-requests/${requestId}/reject`,
           { reason: reason || null, comment: comment || null },
           { headers: { Authorization: `Bearer ${token}` } }
         );
