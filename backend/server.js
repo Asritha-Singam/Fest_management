@@ -102,8 +102,18 @@ const createAdminIfNotExists = async ()=>{
     }
 }
 
-connectDB();
-createAdminIfNotExists();
-server.listen(PORT, () => {
-    console.log(`Server started on PORT ${PORT}!`);
-});
+const startServer = async () => {
+  try {
+    await connectDB();
+    await createAdminIfNotExists();
+
+    server.listen(PORT, () => {
+      console.log(`Server started on PORT ${PORT}!`);
+    });
+  } catch (error) {
+    console.error("Server startup error:", error);
+    process.exit(1);
+  }
+};
+
+startServer();
