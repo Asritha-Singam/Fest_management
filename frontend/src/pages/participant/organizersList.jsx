@@ -19,7 +19,7 @@ const OrganizersList = () => {
 
   const fetchOrganizers = async () => {
     try {
-      const response = await api.get("/participants/organizers", {
+      const response = await api.get("/api/participants/organizers", {
         headers: { Authorization: `Bearer ${token}` }
       });
       setOrganizers(response.data.organizers || []);
@@ -30,7 +30,7 @@ const OrganizersList = () => {
 
   const fetchUserProfile = async () => {
     try {
-      const response = await api.get("/participants/profile", {
+      const response = await api.get("/api/participants/profile", {
         headers: { Authorization: `Bearer ${token}` }
       });
       const followed = response.data.participant?.followedOrganizers || [];

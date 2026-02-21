@@ -16,7 +16,7 @@ const AdminDashboard = () => {
   const fetchOrganizers = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/admin/organizers", {
+      const res = await api.get("/api/admin/organizers", {
         headers: { Authorization: `Bearer ${token}` }
       });
       setOrganizers(res.data.organizers || []);

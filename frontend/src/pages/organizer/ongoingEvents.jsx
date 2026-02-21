@@ -11,7 +11,7 @@ const OngoingEvents = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const res = await api.get("/organizer/events", {
+        const res = await api.get("/api/organizer/events", {
           headers: { Authorization: `Bearer ${token}` }
         });
 

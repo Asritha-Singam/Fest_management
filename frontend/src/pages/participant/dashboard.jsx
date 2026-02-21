@@ -21,7 +21,7 @@ const Dashboard = () => {
       if (!token) return;
 
       try {
-        const res = await api.get("/participants/my-events", {
+        const res = await api.get("/api/participants/my-events", {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -43,14 +43,14 @@ const Dashboard = () => {
 
     setCancellingId(participationId);
     try {
-      const res = await api.delete(`/participants/cancel-registration/${participationId}`, {
+      const res = await api.delete(`/api/participants/cancel-registration/${participationId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       if (res.data.success) {
         alert("Registration cancelled successfully");
         // Refresh the events list
-        const refreshRes = await api.get("/participants/my-events", {
+        const refreshRes = await api.get("/api/participants/my-events", {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (refreshRes.data.success) {

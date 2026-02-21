@@ -44,7 +44,7 @@ const EventDetail = () => {
 
   const fetchEventDetails = async () => {
     try {
-      const response = await api.get("/events/all", {
+      const response = await api.get("/api/events/all", {
         headers: { Authorization: `Bearer ${token}` }
       });
       const foundEvent = response.data.events?.find(e => e._id === id);
@@ -58,7 +58,7 @@ const EventDetail = () => {
 
   const fetchUserProfile = async () => {
     try {
-      const response = await api.get("/participants/profile", {
+      const response = await api.get("/api/participants/profile", {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUserParticipantType(response.data.participant?.participantType || "");
@@ -69,7 +69,7 @@ const EventDetail = () => {
 
   const checkRegistrationStatus = async () => {
     try {
-      const response = await api.get("/participants/my-events", {
+      const response = await api.get("/api/participants/my-events", {
         headers: { Authorization: `Bearer ${token}` }
       });
       

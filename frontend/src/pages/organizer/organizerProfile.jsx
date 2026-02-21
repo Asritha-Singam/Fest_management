@@ -18,7 +18,7 @@ const OrganizerProfile = () => {
 
   const fetchProfile = async () => {
     try {
-      const res = await api.get("/organizer/profile", {
+      const res = await api.get("/api/organizer/profile", {
         headers: { Authorization: `Bearer ${token}` }
       });
       setProfile(res.data.organizer);
@@ -71,7 +71,7 @@ const OrganizerProfile = () => {
 
   const fetchResetHistory = async () => {
     try {
-      const res = await api.get("/organizer/password-reset-history", {
+      const res = await api.get("/api/organizer/password-reset-history", {
         headers: { Authorization: `Bearer ${token}` }
       });
       setResetHistory(res.data.requests || []);

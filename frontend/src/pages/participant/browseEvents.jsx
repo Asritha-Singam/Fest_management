@@ -32,7 +32,7 @@ const BrowseEvents = () => {
 
     const fetchUserProfile = async () => {
       try {
-        const response = await api.get("/participants/profile", {
+        const response = await api.get("/api/participants/profile", {
           headers: { Authorization: `Bearer ${token}` }
         });
         setUserParticipantType(response.data.participant?.participantType || "");
@@ -48,7 +48,7 @@ const BrowseEvents = () => {
       if (!token) return;
       
       try {
-        const response = await api.get("/participants/my-events", {
+        const response = await api.get("/api/participants/my-events", {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -85,7 +85,7 @@ const BrowseEvents = () => {
       if (!token) return;
       
       try {
-        const response = await api.get("/participants/recommended-events", {
+        const response = await api.get("/api/participants/recommended-events", {
           headers: { Authorization: `Bearer ${token}` }
         });
         setEvents(response.data.events || []);
@@ -137,7 +137,7 @@ const BrowseEvents = () => {
 
     const fetchTrendingEvents = async () => {
       try {
-        const response = await api.get("/events/trending", {
+        const response = await api.get("/api/events/trending", {
           headers: { Authorization: `Bearer ${token}` }
         });
         setEvents(response.data.events || []);

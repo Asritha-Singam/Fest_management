@@ -22,7 +22,7 @@ const OrganizerDetail = () => {
 
   const fetchOrganizerDetails = async () => {
     try {
-      const response = await api.get("/participants/organizers", {
+      const response = await api.get("/api/participants/organizers", {
         headers: { Authorization: `Bearer ${token}` }
       });
       const org = response.data.organizers?.find(o => o._id === id);

@@ -20,7 +20,7 @@ const PasswordResetRequests = () => {
       console.log("Fetching password reset requests from: /admin/password-reset-requests");
       
       // Always fetch all requests, filter on client side
-      const res = await api.get("/admin/password-reset-requests", {
+      const res = await api.get("/api/admin/password-reset-requests", {
         headers: { Authorization: `Bearer ${token}` }
       });
       

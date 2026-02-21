@@ -34,7 +34,7 @@ const Onboarding = () => {
 
   const fetchOrganizers = async () => {
     try {
-      const response = await api.get("/participants/organizers", {
+      const response = await api.get("/api/participants/organizers", {
         headers: { Authorization: `Bearer ${token}` }
       });
       setOrganizers(response.data.organizers || []);

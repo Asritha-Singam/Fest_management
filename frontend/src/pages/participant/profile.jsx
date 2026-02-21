@@ -57,7 +57,7 @@ const Profile = () => {
     
     try {
       console.log("Loading profile with token:", token ? "Token exists" : "No token");
-      const response = await api.get("/participants/profile", {
+      const response = await api.get("/api/participants/profile", {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -93,7 +93,7 @@ const Profile = () => {
     if (!token) return;
     
     try {
-      const response = await api.get("/participants/organizers", {
+      const response = await api.get("/api/participants/organizers", {
         headers: { Authorization: `Bearer ${token}` }
       });
       setOrganizers(response.data.organizers || []);
