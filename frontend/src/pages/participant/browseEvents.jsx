@@ -105,7 +105,8 @@ const BrowseEvents = () => {
 
     const fetchAllEvents = async (searchQuery = "", type = "", eligibility = "", dateStart = "", dateEnd = "") => {
       try {
-        let url = `http://localhost:5000/api/events/all?search=${searchQuery}&type=${type}`;
+        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        let url = `${apiUrl}/api/events/all?search=${searchQuery}&type=${type}`;
         
         if (eligibility) url += `&eligibility=${eligibility}`;
         if (dateStart) url += `&startDate=${dateStart}`;

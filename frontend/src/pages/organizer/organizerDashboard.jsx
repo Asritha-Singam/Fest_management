@@ -16,8 +16,9 @@ const OrganizerDashboard = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
+        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
         const res = await axios.get(
-          "http://localhost:5000/api/organizer/events",
+          `${apiUrl}/api/organizer/events`,
           {
             headers: {
               Authorization: `Bearer ${token}`
@@ -32,8 +33,9 @@ const OrganizerDashboard = () => {
 
     const fetchAnalytics = async () => {
       try {
+        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
         const res = await axios.get(
-          "http://localhost:5000/api/organizer/dashboard/analytics",
+          `${apiUrl}/api/organizer/dashboard/analytics`,
           {
             headers: {
               Authorization: `Bearer ${token}`
