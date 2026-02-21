@@ -22,8 +22,13 @@ app.set('trust proxy', 1);
 // Configure CORS
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow localhost on any port and no origin (mobile apps, curl requests)
-    if (!origin || /^http:\/\/localhost:\d+$/.test(origin)) {
+    const allowedOrigins = [
+      "http://localhost:5173",
+      process.env.FRONTEND_URL
+    ].filter(Boolean);
+    
+    // Allow requests with no origin (mobile apps, curl requests)
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
