@@ -76,7 +76,7 @@ const Onboarding = () => {
   const handleSubmit = async () => {
     try {
       await api.put(
-        "/participants/profile",
+        "/api/participants/profile",
         {
           interests: selectedInterests,
           followedOrganizers: selectedOrganizers

@@ -123,7 +123,7 @@ const Profile = () => {
 
     try {
       await api.put(
-        "/participants/profile",
+        "/api/participants/profile",
         {
           ...form,
           interests: selectedInterests,
@@ -158,7 +158,7 @@ const Profile = () => {
 
     try {
       await api.post(
-        "/participants/change-password",
+        "/api/participants/change-password",
         {
           currentPassword: passwordForm.currentPassword,
           newPassword: passwordForm.newPassword

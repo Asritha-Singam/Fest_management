@@ -22,7 +22,7 @@ const EventAttendance = () => {
 
   const fetchEventData = async () => {
     try {
-      const eventRes = await api.get(`/organizer/events`, {
+      const eventRes = await api.get(`/api/organizer/events`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

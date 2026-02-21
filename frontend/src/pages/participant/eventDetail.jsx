@@ -117,7 +117,7 @@ const EventDetail = () => {
     setRegistering(true);
     try {
       const response = await api.post(
-        `/participants/register/${id}`,
+        `/api/participants/register/${id}`,
         registrationData,
         { headers: { Authorization: `Bearer ${token}` } }
       );

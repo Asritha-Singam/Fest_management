@@ -12,7 +12,7 @@ const ForumMessageList = ({ messages, onMessagesUpdate, eventId }) => {
       try {
         const reason = window.prompt("Reason for deletion (optional):");
         await api.delete(
-          `/events/${eventId}/forum/messages/${messageId}`,
+          `/api/events/${eventId}/forum/messages/${messageId}`,
           {
             data: { reason: reason || null },
             headers: { Authorization: `Bearer ${token}` }
@@ -34,7 +34,7 @@ const ForumMessageList = ({ messages, onMessagesUpdate, eventId }) => {
   const handlePinMessage = async (messageId) => {
     try {
       await api.patch(
-        `/events/${eventId}/forum/messages/${messageId}/pin`,
+        `/api/events/${eventId}/forum/messages/${messageId}/pin`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -53,7 +53,7 @@ const ForumMessageList = ({ messages, onMessagesUpdate, eventId }) => {
   const handleAddReaction = async (messageId, emoji) => {
     try {
       const res = await api.post(
-        `/events/${eventId}/forum/messages/${messageId}/reaction`,
+        `/api/events/${eventId}/forum/messages/${messageId}/reaction`,
         { emoji },
         { headers: { Authorization: `Bearer ${token}` } }
       );

@@ -166,7 +166,7 @@ const BrowseEvents = () => {
      setLoading(true);
      try {
        const response = await api.post(
-         `/participants/register/${eventId}`,
+         `/api/participants/register/${eventId}`,
          {},
          {
            headers: { Authorization: `Bearer ${token}` }

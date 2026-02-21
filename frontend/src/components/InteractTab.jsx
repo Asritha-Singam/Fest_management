@@ -182,7 +182,7 @@ const InteractTab = ({ eventId, socket, isOrganizer }) => {
     try {
       setLoading(true);
       const response = await api.get(
-        `/events/${eventId}/forum/interact?page=${page}&limit=${limit}`,
+        `/api/events/${eventId}/forum/interact?page=${page}&limit=${limit}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -204,7 +204,7 @@ const InteractTab = ({ eventId, socket, isOrganizer }) => {
   const handlePostMessage = async (content, parentId = null) => {
     try {
       const response = await api.post(
-        `/events/${eventId}/forum/messages`,
+        `/api/events/${eventId}/forum/messages`,
         {
           content,
           messageType: "message",
@@ -237,7 +237,7 @@ const InteractTab = ({ eventId, socket, isOrganizer }) => {
     if (window.confirm("Are you sure you want to delete this message?")) {
       try {
         await api.delete(
-          `/events/${eventId}/forum/messages/${messageId}`,
+          `/api/events/${eventId}/forum/messages/${messageId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -274,7 +274,7 @@ const InteractTab = ({ eventId, socket, isOrganizer }) => {
     } else {
       try {
         const response = await api.get(
-          `/events/${eventId}/forum/messages/${messageId}/replies`,
+          `/api/events/${eventId}/forum/messages/${messageId}/replies`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -299,7 +299,7 @@ const InteractTab = ({ eventId, socket, isOrganizer }) => {
   const handleAddReaction = async (messageId, emoji) => {
     try {
       const response = await api.post(
-        `/events/${eventId}/forum/messages/${messageId}/reaction`,
+        `/api/events/${eventId}/forum/messages/${messageId}/reaction`,
         { emoji },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -329,7 +329,7 @@ const InteractTab = ({ eventId, socket, isOrganizer }) => {
   const handlePinMessage = async (messageId) => {
     try {
       const response = await api.patch(
-        `/events/${eventId}/forum/messages/${messageId}/pin`,
+        `/api/events/${eventId}/forum/messages/${messageId}/pin`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );

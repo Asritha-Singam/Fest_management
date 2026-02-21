@@ -90,7 +90,7 @@ const CreateEvent = () => {
 
     try {
       await api.post(
-        "/organizer/events/create",
+        "/api/organizer/events/create",
         submitData,
         {
           headers: {

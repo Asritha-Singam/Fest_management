@@ -55,7 +55,7 @@ const OrganizersList = () => {
       }
 
       await api.put(
-        "/participants/profile",
+        "/api/participants/profile",
         { followedOrganizers: Array.from(newFollowed) },
         { headers: { Authorization: `Bearer ${token}` } }
       );

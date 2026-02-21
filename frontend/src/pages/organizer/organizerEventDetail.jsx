@@ -39,7 +39,7 @@ const OrganizerEventDetail = () => {
 
   const fetchEventData = async () => {
     try {
-      const eventRes = await api.get(`/organizer/events`, {
+      const eventRes = await api.get(`/api/organizer/events`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -47,13 +47,13 @@ const OrganizerEventDetail = () => {
       setEvent(selectedEvent);
 
       const participantsRes = await api.get(
-        `/organizer/events/${id}/participants`,
+        `/api/organizer/events/${id}/participants`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setParticipants(participantsRes.data.participants);
 
       const analyticsRes = await api.get(
-        `/organizer/events/${id}/analytics`,
+        `/api/organizer/events/${id}/analytics`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setAnalytics(analyticsRes.data.analytics);
@@ -66,7 +66,7 @@ const OrganizerEventDetail = () => {
   const handlePublish = async () => {
     try {
       await api.post(
-        `/organizer/events/${id}/publish`,
+        `/api/organizer/events/${id}/publish`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -115,7 +115,7 @@ const OrganizerEventDetail = () => {
 
     try {
       const response = await api.patch(
-        `/organizer/events/${id}`,
+        `/api/organizer/events/${id}`,
         editData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -296,7 +296,7 @@ const OrganizerEventDetail = () => {
                   if (window.confirm('Close registrations now? This will set the deadline to the current time.')) {
                     try {
                       const response = await api.patch(
-                        `/organizer/events/${id}`,
+                        `/api/organizer/events/${id}`,
                         { closeRegistrations: true },
                         { headers: { Authorization: `Bearer ${token}` } }
                       );

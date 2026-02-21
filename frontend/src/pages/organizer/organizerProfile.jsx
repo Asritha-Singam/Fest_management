@@ -30,7 +30,7 @@ const OrganizerProfile = () => {
   const handleUpdate = async () => {
     try {
       await api.put(
-        "/organizer/profile",
+        "/api/organizer/profile",
         editData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -54,7 +54,7 @@ const OrganizerProfile = () => {
     if (window.confirm("Request a password reset? Admin will review and reset your password.")) {
       try {
         const response = await api.post(
-          "/organizer/request-password-reset",
+          "/api/organizer/request-password-reset",
           { reason: resetReason.trim() },
           { headers: { Authorization: `Bearer ${token}` } }
         );

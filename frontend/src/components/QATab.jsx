@@ -105,7 +105,7 @@ const QATab = ({ eventId, socket, isOrganizer }) => {
     try {
       setLoading(true);
       const response = await api.get(
-        `/events/${eventId}/forum/qa?page=${page}&limit=${limit}`,
+        `/api/events/${eventId}/forum/qa?page=${page}&limit=${limit}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -126,7 +126,7 @@ const QATab = ({ eventId, socket, isOrganizer }) => {
   const handlePostQuestion = async (content) => {
     try {
       const response = await api.post(
-        `/events/${eventId}/forum/messages`,
+        `/api/events/${eventId}/forum/messages`,
         {
           content,
           messageType: "question"
@@ -154,7 +154,7 @@ const QATab = ({ eventId, socket, isOrganizer }) => {
   const handlePostAnswer = async (content, questionId) => {
     try {
       const response = await api.post(
-        `/events/${eventId}/forum/messages`,
+        `/api/events/${eventId}/forum/messages`,
         {
           content,
           messageType: "answer",
@@ -167,7 +167,7 @@ const QATab = ({ eventId, socket, isOrganizer }) => {
 
       // Mark question as answered
       await api.patch(
-        `/events/${eventId}/forum/questions/${questionId}/answered`,
+        `/api/events/${eventId}/forum/questions/${questionId}/answered`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -196,7 +196,7 @@ const QATab = ({ eventId, socket, isOrganizer }) => {
     if (window.confirm("Are you sure you want to delete this message?")) {
       try {
         await api.delete(
-          `/events/${eventId}/forum/messages/${messageId}`,
+          `/api/events/${eventId}/forum/messages/${messageId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -238,7 +238,7 @@ const QATab = ({ eventId, socket, isOrganizer }) => {
   const handleAddReaction = async (messageId, emoji) => {
     try {
       const response = await api.post(
-        `/events/${eventId}/forum/messages/${messageId}/reaction`,
+        `/api/events/${eventId}/forum/messages/${messageId}/reaction`,
         { emoji },
         { headers: { Authorization: `Bearer ${token}` } }
       );

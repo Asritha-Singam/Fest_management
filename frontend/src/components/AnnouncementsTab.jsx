@@ -39,7 +39,7 @@ const AnnouncementsTab = ({ eventId, socket, isOrganizer }) => {
     try {
       setLoading(true);
       const response = await api.get(
-        `/events/${eventId}/forum/announcements`,
+        `/api/events/${eventId}/forum/announcements`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -55,7 +55,7 @@ const AnnouncementsTab = ({ eventId, socket, isOrganizer }) => {
   const handlePostAnnouncement = async (content) => {
     try {
       const response = await api.post(
-        `/events/${eventId}/forum/messages`,
+        `/api/events/${eventId}/forum/messages`,
         {
           content,
           messageType: "announcement"
@@ -77,7 +77,7 @@ const AnnouncementsTab = ({ eventId, socket, isOrganizer }) => {
     if (window.confirm("Are you sure you want to delete this announcement?")) {
       try {
         await api.delete(
-          `/events/${eventId}/forum/messages/${announcementId}`,
+          `/api/events/${eventId}/forum/messages/${announcementId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 

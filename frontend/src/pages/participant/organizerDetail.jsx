@@ -36,7 +36,7 @@ const OrganizerDetail = () => {
 
   const fetchOrganizerEvents = async () => {
     try {
-      const response = await api.get(`/events/organizer/${id}`, {
+      const response = await api.get(`/api/events/organizer/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
