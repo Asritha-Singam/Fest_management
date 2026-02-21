@@ -19,7 +19,8 @@ const getTransporter = () => {
         },
         connectionTimeout: 10000, // 10 seconds
         greetingTimeout: 10000,
-        socketTimeout: 10000
+        socketTimeout: 10000,
+        family: 4 // Force IPv4 instead of IPv6
     });
 };
 
