@@ -9,7 +9,7 @@ import { Server } from "socket.io";
 import bcrypt from "bcrypt";
 import User from "./models/User.js";
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 5000;
 
 // Create HTTP server
 const server = createServer(app);
