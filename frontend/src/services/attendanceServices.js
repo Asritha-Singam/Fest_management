@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 // Get auth token from localStorage
 const getAuthHeader = () => {
@@ -89,6 +89,9 @@ export const exportAttendanceCSV = async (eventId) => {
     
     return { success: true, message: 'CSV downloaded successfully' };
   } catch (error) {
+    if (error.response?.data instanceof Blob) {
+      throw { message: 'Failed to export attendance' };
+    }
     throw error.response?.data || { message: 'Failed to export attendance' };
   }
 };

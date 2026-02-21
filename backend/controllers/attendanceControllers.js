@@ -53,7 +53,7 @@ export const scanQRCode = async (req, res) => {
         const participation = await Participation.findOne({ 
             ticketId: ticketId 
                 }).populate('participant', 'firstName lastName email')
-                    .populate('event', 'name date organizer');
+                    .populate('event', 'eventName eventStartDate eventEndDate organizer');
 
         if (!participation) {
             return res.status(404).json({ 
@@ -131,7 +131,7 @@ export const scanQRCode = async (req, res) => {
             data: {
                 participantName: resolvedName,
                 participantEmail: participation.participant.email,
-                eventName: participation.event.name,
+                eventName: participation.event.eventName,
                 checkInTime: participation.checkInTime,
                 ticketId: participation.ticketId
             }
@@ -169,7 +169,7 @@ export const manualCheckIn = async (req, res) => {
         // Find participation
         const participation = await Participation.findById(participationId)
             .populate('participant', 'firstName lastName email')
-            .populate('event', 'name organizer');
+            .populate('event', 'eventName eventStartDate eventEndDate organizer');
 
         if (!participation) {
             return res.status(404).json({ 
@@ -208,7 +208,7 @@ export const manualCheckIn = async (req, res) => {
             data: {
                 participantName: getDisplayName(participation.participant),
                 participantEmail: participation.participant.email,
-                eventName: participation.event.name,
+                eventName: participation.event.eventName,
                 checkInTime: participation.checkInTime,
                 manualOverride: true
             }
@@ -277,8 +277,8 @@ export const getAttendanceDashboard = async (req, res) => {
         return res.status(200).json({
             success: true,
             data: {
-                eventName: event.name,
-                eventDate: event.date,
+                eventName: event.eventName,
+                eventDate: event.eventStartDate,
                 statistics: {
                     totalParticipants,
                     checkedIn,
@@ -309,7 +309,7 @@ export const getParticipationStatus = async (req, res) => {
 
         const participation = await Participation.findById(participationId)
             .populate('participant', 'firstName lastName email')
-            .populate('event', 'name date organizer')
+            .populate('event', 'eventName eventStartDate eventEndDate organizer')
             .populate('checkInBy', 'firstName lastName email');
 
         if (!participation) {
@@ -334,7 +334,7 @@ export const getParticipationStatus = async (req, res) => {
             success: true,
             data: {
                 participantName: getDisplayName(participation.participant),
-                eventName: participation.event.name,
+                eventName: participation.event.eventName,
                 attendanceStatus: participation.attendanceStatus,
                 checkInTime: participation.checkInTime,
                 checkInBy: participation.checkInBy ? getDisplayName(participation.checkInBy) : null,
@@ -392,14 +392,18 @@ export const exportAttendanceCSV = async (req, res) => {
                 : 'N/A';
             const checkInBy = p.checkInBy ? getDisplayName(p.checkInBy) : 'N/A';
             const phone = 'N/A';
+            const participantEmail = p.participant?.email || 'N/A';
+            const participantName = getDisplayName(p.participant) || 'N/A';
             
-            return `"${p.ticketId || 'N/A'}","${getDisplayName(p.participant)}","${p.participant.email}","${phone}","${p.attendanceStatus}","${checkInTime}","${checkInBy}","${p.manualOverride ? 'Yes' : 'No'}","${p.overrideReason || 'N/A'}"`;
+            return `"${p.ticketId || 'N/A'}","${participantName}","${participantEmail}","${phone}","${p.attendanceStatus}","${checkInTime}","${checkInBy}","${p.manualOverride ? 'Yes' : 'No'}","${p.overrideReason || 'N/A'}"`;
         }).join('\n');
 
         const csv = csvHeader + csvRows;
 
         // Set headers for file download
-        const filename = `attendance_${event.name.replace(/[^a-z0-9]/gi, '_')}_${Date.now()}.csv`;
+        const eventName = event.eventName || event.name || 'event';
+        const safeEventName = String(eventName).replace(/[^a-z0-9]/gi, '_');
+        const filename = `attendance_${safeEventName}_${Date.now()}.csv`;
         res.setHeader('Content-Type', 'text/csv');
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
