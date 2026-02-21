@@ -7,12 +7,12 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
     //if someone is not logged in
     if (!token) {
-        return <Navigate to="/login" replace />;
+        return <Navigate to="/" replace />;
     }
 
     //logined but wrong route
     if(allowedRoles && !allowedRoles.includes(role)){
-        return <Navigate to="/login" replace />;
+        return <Navigate to="/" replace />;
     }
 
     //allowed

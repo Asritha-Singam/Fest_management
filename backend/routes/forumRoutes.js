@@ -8,7 +8,8 @@ import {
   getMessageReplies,
   toggleReaction,
   deleteForumMessage,
-  togglePinMessage
+  togglePinMessage,
+  markQuestionAsAnswered
 } from "../controllers/forumControllers.js";
 
 const router = express.Router();
@@ -40,5 +41,8 @@ router.delete("/events/:eventId/forum/messages/:messageId", deleteForumMessage);
 
 // Pin/unpin a message (organizer/admin only)
 router.patch("/events/:eventId/forum/messages/:messageId/pin", togglePinMessage);
+
+// Mark question as answered (organizer/admin only)
+router.patch("/events/:eventId/forum/questions/:questionId/answered", markQuestionAsAnswered);
 
 export default router;

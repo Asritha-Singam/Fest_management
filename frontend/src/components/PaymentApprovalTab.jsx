@@ -30,13 +30,22 @@ const PaymentApprovalTab = () => {
         setLoading(false);
     };
 
+    const removePaymentFromList = (paymentId) => {
+        setPayments(prevPayments => prevPayments.filter(payment => payment._id !== paymentId));
+    };
+
     const handleApprovePayment = async (paymentId) => {
         if (!window.confirm('Are you sure you want to approve this payment?')) return;
 
         try {
             await approvePayment(paymentId);
             alert('Payment approved successfully!');
-            fetchPendingPayments();
+            removePaymentFromList(paymentId);
+            if (payments.length === 1 && page > 1) {
+                setPage(prev => prev - 1);
+            } else {
+                fetchPendingPayments();
+            }
         } catch (err) {
             alert(err.response?.data?.message || 'Error approving payment');
         }
@@ -53,7 +62,12 @@ const PaymentApprovalTab = () => {
             alert('Payment rejected successfully!');
             setRejectingPaymentId(null);
             setRejectionReason('');
-            fetchPendingPayments();
+            removePaymentFromList(paymentId);
+            if (payments.length === 1 && page > 1) {
+                setPage(prev => prev - 1);
+            } else {
+                fetchPendingPayments();
+            }
         } catch (err) {
             alert(err.response?.data?.message || 'Error rejecting payment');
         }

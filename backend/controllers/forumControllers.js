@@ -364,6 +364,79 @@ export const postForumMessage = async (req, res) => {
 };
 
 // Mark question as answered
+export const markQuestionAsAnswered = async (req, res) => {
+  try {
+    const { eventId, questionId } = req.params;
+    const userId = req.user.id;
+
+    // Only organizer and admin can mark questions as answered
+    if (req.user.role !== "organizer" && req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Only organizers and admins can mark questions as answered"
+      });
+    }
+
+    // Check if organizer owns the event
+    if (req.user.role === "organizer") {
+      const event = await Event.findById(eventId);
+      if (!event) {
+        return res.status(404).json({
+          success: false,
+          message: "Event not found"
+        });
+      }
+      
+      const eventOwnerId = event.organizer.toString();
+      const currentUserId = userId.toString();
+      
+      if (eventOwnerId !== currentUserId) {
+        return res.status(403).json({
+          success: false,
+          message: "You can only manage questions in your own events"
+        });
+      }
+    }
+
+    const question = await ForumMessage.findById(questionId);
+    if (!question || question.isDeleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Question not found"
+      });
+    }
+
+    if (question.messageType !== "question") {
+      return res.status(400).json({
+        success: false,
+        message: "This message is not a question"
+      });
+    }
+
+    question.isAnswered = true;
+    await question.save();
+
+    emitForumEvent(req, eventId, "question-answered", {
+      eventId,
+      questionId,
+      isAnswered: true
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Question marked as answered",
+      data: question
+    });
+  } catch (error) {
+    console.error("Mark question as answered error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error marking question as answered",
+      error: error.message
+    });
+  }
+};
+
 // Get message replies (threading)
 export const getMessageReplies = async (req, res) => {
   try {

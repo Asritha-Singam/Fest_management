@@ -8,7 +8,7 @@ const ParticipantNavbar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/");
   };
 
   return (
