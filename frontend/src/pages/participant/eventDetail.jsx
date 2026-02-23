@@ -29,9 +29,11 @@ const EventDetail = () => {
   // Form data for merchandise or custom fields
   const [merchandiseSelection, setMerchandiseSelection] = useState({
     size: "",
-    color: ""
+    color: "",
+    quantity: 1
   });
   const [customFieldResponses, setCustomFieldResponses] = useState([]);
+  const [purchasedStock, setPurchasedStock] = useState(0);
 
   useEffect(() => {
     if (token && id) {
@@ -39,6 +41,7 @@ const EventDetail = () => {
       fetchUserProfile();
       checkRegistrationStatus();
       fetchOrderStatus();
+      fetchPurchasedStock();
     }
   }, [token, id]);
 
@@ -96,6 +99,18 @@ const EventDetail = () => {
     }
   };
 
+  const fetchPurchasedStock = async () => {
+    try {
+      const response = await api.get(`/api/payments/event/${id}/purchased-quantity`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPurchasedStock(response.data.totalPurchased || 0);
+    } catch (error) {
+      console.error("Error fetching purchased stock:", error);
+      setPurchasedStock(0);
+    }
+  };
+
   const handleRegister = async () => {
     if (registering) return;
 
@@ -144,6 +159,15 @@ const EventDetail = () => {
         alert("Please select both size and color");
         return;
       }
+      if (!merchandiseSelection.quantity || merchandiseSelection.quantity < 1) {
+        alert("Please select a valid quantity");
+        return;
+      }
+      const maxLimit = event.merchandiseDetails?.purchaseLimitPerUser || 1;
+      if (merchandiseSelection.quantity > maxLimit) {
+        alert(`Purchase limit is ${maxLimit} per person`);
+        return;
+      }
       submitRegistration({ merchandiseSelection });
     }
 
@@ -188,8 +212,8 @@ const EventDetail = () => {
     setPaymentSuccess(false);
 
     try {
-      // First create order
-      const orderResponse = await createOrder(id, 1);
+      // First create order with the selected quantity
+      const orderResponse = await createOrder(id, merchandiseSelection.quantity);
       const orderId = orderResponse.data.orderId;
 
       // Then upload payment proof
@@ -377,7 +401,7 @@ const EventDetail = () => {
                 <p><strong>Available Colors:</strong> {event.merchandiseDetails.colors.join(", ")}</p>
               )}
               {event.merchandiseDetails.stock && (
-                <p><strong>Stock:</strong> {event.merchandiseDetails.stock}</p>
+                <p><strong>Stock Left:</strong> {Math.max(0, event.merchandiseDetails.stock - purchasedStock)}</p>
               )}
               {event.merchandiseDetails.purchaseLimitPerUser && (
                 <p><strong>Purchase Limit:</strong> {event.merchandiseDetails.purchaseLimitPerUser} per person</p>
@@ -563,6 +587,31 @@ const EventDetail = () => {
                         </select>
                       </div>
                     )}
+
+                    <div style={formGroup}>
+                      <label style={label}>
+                        Select Quantity * 
+                        {event.merchandiseDetails?.purchaseLimitPerUser && (
+                          <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                            (Max: {event.merchandiseDetails.purchaseLimitPerUser})
+                          </span>
+                        )}
+                      </label>
+                      <select
+                        value={merchandiseSelection.quantity}
+                        onChange={(e) => setMerchandiseSelection({
+                          ...merchandiseSelection,
+                          quantity: parseInt(e.target.value)
+                        })}
+                        style={selectInput}
+                        required
+                      >
+                        <option value="">-- Select Quantity --</option>
+                        {Array.from({ length: event.merchandiseDetails?.purchaseLimitPerUser || 1 }, (_, i) => i + 1).map((num) => (
+                          <option key={num} value={num}>{num}</option>
+                        ))}
+                      </select>
+                    </div>
                   </>
                 )}
 

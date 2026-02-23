@@ -1,5 +1,6 @@
 import Event from "../models/events.js";
 import Participation from "../models/participation.js";
+import Order from "../models/Order.js";
 import {Parser} from "json2csv";
 import {sendDiscordMessage} from "../utils/sendDiscord.js";
 // Helper function to update event status to "ongoing" if date falls between start and end
@@ -279,10 +280,25 @@ export const getEventAnalytics = async (req, res) => {
     if (event.organizer.toString() !== req.user.id) {
       return res.status(403).json({ message: "Unauthorized" });
     }
-    const participants = await Participation.find({ event: event._id });
-    const totalRegistrations = participants.length;
-    const totalRevenue = participants.filter(p=>p.paymentStatus === "Paid")
-      .reduce((sum, p) => sum + event.registrationFee, 0);
+    
+    let totalRegistrations = 0;
+    let totalRevenue = 0;
+
+    if (event.eventType === "MERCHANDISE") {
+      // For merchandise events, only count registrations with approved orders
+      const approvedOrders = await Order.find({ 
+        eventId: event._id,
+        paymentStatus: "Approved"
+      });
+      totalRegistrations = approvedOrders.length;
+      totalRevenue = approvedOrders.reduce((sum, order) => sum + order.totalAmount, 0);
+    } else {
+      // For regular events, count all participants as revenue
+      const participants = await Participation.find({ event: event._id });
+      totalRegistrations = participants.length;
+      totalRevenue = participants.length * event.registrationFee;
+    }
+
     res.status(200).json({
       success: true,
       analytics: {

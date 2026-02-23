@@ -15,6 +15,7 @@ const OrganizerEventDetail = () => {
   const [filteredParticipants, setFilteredParticipants] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [analytics, setAnalytics] = useState(null);
+  const [purchasedStock, setPurchasedStock] = useState(0);
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState({});
 
@@ -57,6 +58,19 @@ const OrganizerEventDetail = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setAnalytics(analyticsRes.data.analytics);
+
+      // Fetch purchased stock for merchandise events
+      if (selectedEvent?.eventType === "MERCHANDISE") {
+        try {
+          const stockRes = await api.get(
+            `/api/payments/event/${id}/purchased-quantity`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          setPurchasedStock(stockRes.data.totalPurchased || 0);
+        } catch (error) {
+          console.error("Error fetching purchased stock:", error);
+        }
+      }
 
     } catch (error) {
       console.error(error);
@@ -393,6 +407,14 @@ const OrganizerEventDetail = () => {
               <p style={{ fontSize: "24px", fontWeight: "bold", margin: "0" }}>₹{analytics.totalRevenue}</p>
               <p style={{ color: "#666", margin: "5px 0 0 0" }}>Total Revenue</p>
             </div>
+            {event?.eventType === "MERCHANDISE" && event?.merchandiseDetails?.stock && (
+              <div style={{ padding: "15px", backgroundColor: "#fff", border: "1px solid #ddd", borderRadius: "8px" }}>
+                <p style={{ fontSize: "24px", fontWeight: "bold", margin: "0" }}>
+                  {Math.max(0, event.merchandiseDetails.stock - purchasedStock)}/{event.merchandiseDetails.stock}
+                </p>
+                <p style={{ color: "#666", margin: "5px 0 0 0" }}>Stock Left</p>
+              </div>
+            )}
           </div>
         )}
       </div>

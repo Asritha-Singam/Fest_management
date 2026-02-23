@@ -6,6 +6,7 @@ import Participation from "../models/participation.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import QRCode from "qrcode";
 import { logSecurityEvent } from "../middleware/securityMiddleware.js";
+import mongoose from "mongoose";
 
 // Participant: Place order for merchandise
 export const createOrder = async (req, res) => {
@@ -398,6 +399,38 @@ export const getMyOrders = async (req, res) => {
         });
     } catch (error) {
         console.error('Error getting orders:', error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+// Get total purchased quantity for an event
+export const getEventPurchasedQuantity = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+
+        if (!eventId) {
+            return res.status(400).json({ message: "Event ID is required" });
+        }
+
+        // Convert string eventId to mongoose ObjectId for proper matching
+        const objectEventId = new mongoose.Types.ObjectId(eventId);
+
+        // Get only APPROVED orders for the event (not pending)
+        const orders = await Order.find({ 
+            eventId: objectEventId,
+            paymentStatus: "Approved"
+        });
+
+        // Sum up all quantities
+        const totalPurchased = orders.reduce((sum, order) => sum + (order.quantity || 0), 0);
+
+        res.status(200).json({
+            eventId,
+            totalPurchased,
+            orderCount: orders.length
+        });
+    } catch (error) {
+        console.error('Error getting purchased quantity:', error);
         res.status(500).json({ message: "Server error" });
     }
 };
