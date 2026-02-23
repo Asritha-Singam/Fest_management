@@ -434,3 +434,31 @@ export const getEventPurchasedQuantity = async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 };
+
+// Organizer: Get all orders for an event (with approved payment status)
+export const getEventOrders = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+
+        if (!eventId) {
+            return res.status(400).json({ message: "Event ID is required" });
+        }
+
+        // Convert string eventId to mongoose ObjectId for proper matching
+        const objectEventId = new mongoose.Types.ObjectId(eventId);
+
+        // Get only APPROVED orders for the event
+        const orders = await Order.find({ 
+            eventId: objectEventId,
+            paymentStatus: "Approved"
+        }).select("participantId quantity totalAmount");
+
+        res.status(200).json({
+            orders,
+            count: orders.length
+        });
+    } catch (error) {
+        console.error('Error getting event orders:', error);
+        res.status(500).json({ message: "Server error" });
+    }
+};

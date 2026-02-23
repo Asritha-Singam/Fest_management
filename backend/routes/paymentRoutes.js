@@ -6,7 +6,8 @@ import {
     approvePayment,
     rejectPayment,
     getMyOrders,
-    getEventPurchasedQuantity
+    getEventPurchasedQuantity,
+    getEventOrders
 } from '../controllers/paymentControllers.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 import { authorizeRoles } from '../middleware/roleMiddleware.js';
@@ -27,6 +28,9 @@ router.post('/payment/upload', authorizeRoles('participant'), uploadPaymentProof
 
 // Get purchased quantity for event (accessible to all authenticated users)
 router.get('/event/:eventId/purchased-quantity', getEventPurchasedQuantity);
+
+// Get all orders for an event (organizer only)
+router.get('/event/:eventId/orders', authorizeRoles('organizer'), getEventOrders);
 
 // Organizer routes - require authentication and organizer role
 // Get pending payments for approval (organizer)

@@ -109,7 +109,7 @@ const PaymentApprovalTab = () => {
                                         {payment.participantId?.firstName} {payment.participantId?.lastName}
                                     </td>
                                     <td>{payment.participantId?.email}</td>
-                                    <td>{payment.eventId?.title}</td>
+                                    <td>{payment.eventId?.eventName}</td>
                                     <td className="quantity">{payment.orderId?.quantity || 1}</td>
                                     <td className="amount">₹{payment.amount}</td>
                                     <td>{payment.paymentMethod}</td>

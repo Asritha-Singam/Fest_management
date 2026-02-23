@@ -16,6 +16,7 @@ const OrganizerEventDetail = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [analytics, setAnalytics] = useState(null);
   const [purchasedStock, setPurchasedStock] = useState(0);
+  const [orders, setOrders] = useState([]);
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState({});
 
@@ -67,6 +68,13 @@ const OrganizerEventDetail = () => {
             { headers: { Authorization: `Bearer ${token}` } }
           );
           setPurchasedStock(stockRes.data.totalPurchased || 0);
+
+          // Fetch orders for displaying individual quantities
+          const ordersRes = await api.get(
+            `/api/payments/event/${id}/orders`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          setOrders(ordersRes.data.orders || []);
         } catch (error) {
           console.error("Error fetching purchased stock:", error);
         }
@@ -144,6 +152,11 @@ const OrganizerEventDetail = () => {
       console.error(error);
       alert(error.response?.data?.message || 'Failed to update event');
     }
+  };
+
+  const getParticipantOrderQuantity = (participantId) => {
+    const order = orders.find(o => o.participantId === participantId);
+    return order?.quantity || 0;
   };
 
   if (!event) return <div>Loading...</div>;
@@ -446,6 +459,9 @@ const OrganizerEventDetail = () => {
                 <th style={{ padding: "12px", textAlign: "left" }}>Email</th>
                 <th style={{ padding: "12px", textAlign: "left" }}>Ticket ID</th>
                 <th style={{ padding: "12px", textAlign: "left" }}>Reg Date</th>
+                {event?.eventType === "MERCHANDISE" && (
+                  <th style={{ padding: "12px", textAlign: "left" }}>Stock Purchased</th>
+                )}
                 <th style={{ padding: "12px", textAlign: "left" }}>Payment</th>
                 <th style={{ padding: "12px", textAlign: "left" }}>Status</th>
               </tr>
@@ -457,6 +473,11 @@ const OrganizerEventDetail = () => {
                   <td style={{ padding: "12px" }}>{p.participant.email}</td>
                   <td style={{ padding: "12px", fontFamily: "monospace", fontSize: "13px" }}>{p.ticketId}</td>
                   <td style={{ padding: "12px" }}>{new Date(p.registrationDate).toLocaleDateString()}</td>
+                  {event?.eventType === "MERCHANDISE" && (
+                    <td style={{ padding: "12px", fontWeight: "bold", color: "#2E1A47" }}>
+                      {getParticipantOrderQuantity(p.participant._id)} units
+                    </td>
+                  )}
                   <td style={{ padding: "12px" }}>
                     <span style={{ 
                       padding: "4px 8px", 
