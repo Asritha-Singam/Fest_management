@@ -247,32 +247,133 @@ const OrganizerEventDetail = () => {
           {/* Draft → full edit */}
           {event.status === "draft" && (
             <>
+              <label style={{ display: "block", marginBottom: "10px", fontWeight: "500" }}>
+                Event Name:
+              </label>
               <input
                 placeholder="Event Name"
                 defaultValue={event.eventName}
                 onChange={(e) =>
                   setEditData({ ...editData, eventName: e.target.value })
                 }
-                style={{ width: "100%", padding: "10px", marginBottom: "10px", boxSizing: "border-box" }}
+                style={{ width: "100%", padding: "10px", marginBottom: "15px", boxSizing: "border-box", borderRadius: "4px", border: "1px solid #ddd" }}
               />
 
+              <label style={{ display: "block", marginBottom: "10px", fontWeight: "500" }}>
+                Event Description:
+              </label>
               <textarea
-                placeholder="Description"
+                placeholder="Event Description"
                 defaultValue={event.eventDescription}
                 onChange={(e) =>
                   setEditData({ ...editData, eventDescription: e.target.value })
                 }
-                style={{ width: "100%", padding: "10px", marginBottom: "10px", height: "100px", boxSizing: "border-box" }}
+                style={{ width: "100%", padding: "10px", marginBottom: "15px", height: "100px", boxSizing: "border-box", borderRadius: "4px", border: "1px solid #ddd" }}
               />
 
+              <label style={{ display: "block", marginBottom: "10px", fontWeight: "500" }}>
+                Event Type:
+              </label>
+              <select
+                defaultValue={event.eventType}
+                onChange={(e) =>
+                  setEditData({ ...editData, eventType: e.target.value })
+                }
+                style={{ width: "100%", padding: "10px", marginBottom: "15px", boxSizing: "border-box", borderRadius: "4px", border: "1px solid #ddd" }}
+              >
+                <option value="NORMAL">Normal Event</option>
+                <option value="MERCHANDISE">Merchandise Event</option>
+              </select>
+
+              <label style={{ display: "block", marginBottom: "10px", fontWeight: "500" }}>
+                Eligibility:
+              </label>
+              <select
+                defaultValue={event.eligibility}
+                onChange={(e) =>
+                  setEditData({ ...editData, eligibility: e.target.value })
+                }
+                style={{ width: "100%", padding: "10px", marginBottom: "15px", boxSizing: "border-box", borderRadius: "4px", border: "1px solid #ddd" }}
+              >
+                <option value="ALL">All</option>
+                <option value="IIIT_ONLY">IIIT Only</option>
+                <option value="NON_IIIT_ONLY">Non-IIIT Only</option>
+              </select>
+
+              <label style={{ display: "block", marginBottom: "10px", fontWeight: "500" }}>
+                Event Start Date:
+              </label>
+              <input
+                type="datetime-local"
+                defaultValue={event.eventStartDate?.slice(0, 16)}
+                onChange={(e) =>
+                  setEditData({ ...editData, eventStartDate: e.target.value })
+                }
+                style={{ width: "100%", padding: "10px", marginBottom: "15px", boxSizing: "border-box", borderRadius: "4px", border: "1px solid #ddd" }}
+              />
+
+              <label style={{ display: "block", marginBottom: "10px", fontWeight: "500" }}>
+                Event End Date:
+              </label>
+              <input
+                type="datetime-local"
+                defaultValue={event.eventEndDate?.slice(0, 16)}
+                onChange={(e) =>
+                  setEditData({ ...editData, eventEndDate: e.target.value })
+                }
+                style={{ width: "100%", padding: "10px", marginBottom: "15px", boxSizing: "border-box", borderRadius: "4px", border: "1px solid #ddd" }}
+              />
+
+              <label style={{ display: "block", marginBottom: "10px", fontWeight: "500" }}>
+                Registration Deadline:
+              </label>
+              <input
+                type="datetime-local"
+                defaultValue={event.registrationDeadline?.slice(0, 16)}
+                onChange={(e) =>
+                  setEditData({ ...editData, registrationDeadline: e.target.value })
+                }
+                style={{ width: "100%", padding: "10px", marginBottom: "15px", boxSizing: "border-box", borderRadius: "4px", border: "1px solid #ddd" }}
+              />
+
+              <label style={{ display: "block", marginBottom: "10px", fontWeight: "500" }}>
+                Registration Limit:
+              </label>
               <input
                 type="number"
+                min="0"
+                placeholder="0 for unlimited"
+                defaultValue={event.registrationLimit || 0}
+                onChange={(e) =>
+                  setEditData({ ...editData, registrationLimit: parseInt(e.target.value) })
+                }
+                style={{ width: "100%", padding: "10px", marginBottom: "15px", boxSizing: "border-box", borderRadius: "4px", border: "1px solid #ddd" }}
+              />
+
+              <label style={{ display: "block", marginBottom: "10px", fontWeight: "500" }}>
+                Registration Fee (₹):
+              </label>
+              <input
+                type="number"
+                min="0"
                 placeholder="Registration Fee"
                 defaultValue={event.registrationFee}
                 onChange={(e) =>
-                  setEditData({ ...editData, registrationFee: e.target.value })
+                  setEditData({ ...editData, registrationFee: parseInt(e.target.value) })
                 }
-                style={{ width: "100%", padding: "10px", marginBottom: "10px", boxSizing: "border-box" }}
+                style={{ width: "100%", padding: "10px", marginBottom: "15px", boxSizing: "border-box", borderRadius: "4px", border: "1px solid #ddd" }}
+              />
+
+              <label style={{ display: "block", marginBottom: "10px", fontWeight: "500" }}>
+                Event Tags (comma-separated):
+              </label>
+              <input
+                placeholder="Tag1, Tag2, Tag3"
+                defaultValue={event.eventTags?.join(", ") || ""}
+                onChange={(e) =>
+                  setEditData({ ...editData, eventTags: e.target.value.split(",").map(tag => tag.trim()).filter(t => t) })
+                }
+                style={{ width: "100%", padding: "10px", marginBottom: "15px", boxSizing: "border-box", borderRadius: "4px", border: "1px solid #ddd" }}
               />
 
             </>

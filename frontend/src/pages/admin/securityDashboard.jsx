@@ -38,10 +38,12 @@ const SecurityDashboard = () => {
                 setEvents(eventsRes.data.events);
             } else if (activeTab === 'blocked-ips') {
                 const blockedRes = await getBlockedIPs({ active: 'true' });
-                setBlockedIPs(blockedRes.data.blockedIPs);
+                console.log('Blocked IPs Response:', blockedRes);
+                setBlockedIPs(blockedRes.data.blockedIPs || []);
             }
         } catch (error) {
             console.error('Error fetching security data:', error);
+            setError(error.message);
         }
         setLoading(false);
     };
@@ -293,6 +295,11 @@ const SecurityDashboard = () => {
 
                     {activeTab === 'blocked-ips' && (
                         <div className="blocked-ips-tab">
+                            {error && (
+                                <div style={{ padding: '15px', marginBottom: '15px', backgroundColor: '#f8d7da', color: '#721c24', borderRadius: '4px' }}>
+                                    Error: {error}
+                                </div>
+                            )}
                             <table className="data-table">
                                 <thead>
                                     <tr>
@@ -306,24 +313,32 @@ const SecurityDashboard = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {blockedIPs.map((ip) => (
-                                        <tr key={ip._id}>
-                                            <td>{ip.ipAddress}</td>
-                                            <td>{ip.reason}</td>
-                                            <td>{formatDate(ip.blockedAt)}</td>
-                                            <td>{ip.permanent ? 'Permanent' : formatDate(ip.expiresAt)}</td>
-                                            <td>{ip.failedAttempts}</td>
-                                            <td>{ip.blockedBy}</td>
-                                            <td>
-                                                <button 
-                                                    onClick={() => handleUnblockIP(ip.ipAddress)}
-                                                    className="unblock-btn"
-                                                >
-                                                    Unblock
-                                                </button>
+                                    {blockedIPs && blockedIPs.length > 0 ? (
+                                        blockedIPs.map((ip) => (
+                                            <tr key={ip._id}>
+                                                <td>{ip.ipAddress}</td>
+                                                <td>{ip.reason}</td>
+                                                <td>{formatDate(ip.blockedAt)}</td>
+                                                <td>{ip.permanent ? 'Permanent' : formatDate(ip.expiresAt)}</td>
+                                                <td>{ip.failedAttempts}</td>
+                                                <td>{ip.blockedBy}</td>
+                                                <td>
+                                                    <button 
+                                                        onClick={() => handleUnblockIP(ip.ipAddress)}
+                                                        className="unblock-btn"
+                                                    >
+                                                        Unblock
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="7" style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+                                                No blocked IPs found
                                             </td>
                                         </tr>
-                                    ))}
+                                    )}
                                 </tbody>
                             </table>
                         </div>
