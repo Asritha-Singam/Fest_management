@@ -71,7 +71,7 @@ const OrganizersList = () => {
 
   return (
     <>
-      <div style={{ padding: "30px" }}>
+      <div style={{ padding: "30px", maxWidth: "1400px", margin: "0 auto" }}>
         <h1>Clubs / Organizers</h1>
         <p style={{ color: "#666", marginBottom: "30px" }}>
           Browse all approved event organizers and follow them to get personalized recommendations

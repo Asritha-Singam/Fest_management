@@ -37,7 +37,7 @@ const card = {
   border: '1px solid #ccc',
   padding: '40px',
   width: '100%',
-  maxWidth: '400px',
+  maxWidth: '500px',
   textAlign: 'center',
 };
 

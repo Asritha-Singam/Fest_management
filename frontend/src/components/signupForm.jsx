@@ -190,7 +190,7 @@ const formCard = {
     border: '1px solid #ccc',
     padding: '30px',
     width: '100%',
-    maxWidth: '500px',
+    maxWidth: '550px',
 };
 
 const title = {

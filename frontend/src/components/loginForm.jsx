@@ -115,7 +115,7 @@ const formCard = {
   border: '1px solid #ccc',
   padding: '30px',
   width: '100%',
-  maxWidth: '400px',
+  maxWidth: '450px',
 };
 
 const title = {

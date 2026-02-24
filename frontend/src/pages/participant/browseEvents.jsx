@@ -189,7 +189,7 @@ const BrowseEvents = () => {
 
    return (
     <div>
-      <div style={{ padding: "30px" }}>
+      <div style={{ padding: "30px", maxWidth: "1400px", margin: "0 auto" }}>
         <div style={{ marginBottom: "30px" }}>
           <h2>Browse Events</h2>
           

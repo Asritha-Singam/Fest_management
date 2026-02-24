@@ -185,7 +185,7 @@ const Profile = () => {
   }
 
   return (
-    <div style={{ padding: "30px", maxWidth: "900px", margin: "0 auto" }}>
+    <div style={{ padding: "30px", maxWidth: "1200px", margin: "0 auto" }}>
       <h1 style={{ color: "#2E1A47", marginBottom: "10px" }}>My Profile</h1>
       <p style={{ color: "#666", marginBottom: "30px" }}>
         Manage your personal information and preferences

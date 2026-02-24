@@ -257,7 +257,9 @@ const tableContainerStyle = {
   overflowX: "auto",
   marginTop: "20px",
   borderRadius: "8px",
-  boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+  maxWidth: "1400px",
+  margin: "20px auto 0 auto"
 };
 
 const tableStyle = {

@@ -158,7 +158,7 @@ const QRScanner = ({ eventId, onScanComplete }) => {
 
 // Styles
 const container = {
-  maxWidth: '800px',
+  maxWidth: '1000px',
   margin: '0 auto',
   padding: '20px',
 };

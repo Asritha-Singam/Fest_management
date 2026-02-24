@@ -122,7 +122,7 @@ const AttendanceDashboard = ({ eventId, eventName }) => {
 
 // Styles
 const container = {
-  maxWidth: '1400px',
+  maxWidth: '1600px',
   margin: '0 auto',
   padding: '20px',
 };
