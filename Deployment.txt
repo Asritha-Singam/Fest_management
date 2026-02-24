@@ -1,0 +1,2 @@
+Frontend : https://fest-management-iota.vercel.app/
+Backend : https://fest-management-1z59.onrender.com
