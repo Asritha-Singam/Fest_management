@@ -307,7 +307,7 @@ const Profile = () => {
                     }}
                   >
                     <div style={styles.checkbox}>
-                      {followedOrganizers.includes(organizer._id) && "✓"}
+                      {followedOrganizers.includes(organizer._id) && ""}
                     </div>
                     <div>
                       <h3 style={styles.organizerName}>

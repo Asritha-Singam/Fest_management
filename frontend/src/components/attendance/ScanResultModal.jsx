@@ -10,7 +10,7 @@ const ScanResultModal = ({ isOpen, onClose, result, type }) => {
       <div style={modal} onClick={(e) => e.stopPropagation()}>
         {isSuccess && (
           <>
-            <div style={successIcon}>✅</div>
+            <div style={successIcon}></div>
             <h2 style={title}>Check-in Successful!</h2>
             <div style={detailsContainer}>
               <div style={detailRow}>
@@ -41,7 +41,7 @@ const ScanResultModal = ({ isOpen, onClose, result, type }) => {
 
         {isError && (
           <>
-            <div style={errorIcon}>❌</div>
+            <div style={errorIcon}></div>
             <h2 style={titleError}>Check-in Failed</h2>
             <p style={message}>{result.message || 'An error occurred'}</p>
           </>
@@ -49,7 +49,7 @@ const ScanResultModal = ({ isOpen, onClose, result, type }) => {
 
         {isDuplicate && (
           <>
-            <div style={warningIcon}>⚠️</div>
+            <div style={warningIcon}></div>
             <h2 style={titleWarning}>Already Checked In</h2>
             <p style={message}>
               This ticket was already scanned

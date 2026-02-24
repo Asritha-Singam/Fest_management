@@ -108,7 +108,7 @@ const QRScanner = ({ eventId, onScanComplete }) => {
           }}
           disabled={isScanning}
         >
-          📷 Camera
+          Camera
         </button>
         <button
           onClick={() => setScanMode('file')}
@@ -118,7 +118,7 @@ const QRScanner = ({ eventId, onScanComplete }) => {
           }}
           disabled={isScanning}
         >
-          📁 Upload File
+          Upload File
         </button>
       </div>
 

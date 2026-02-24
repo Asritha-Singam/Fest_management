@@ -343,10 +343,10 @@ const QATab = ({ eventId, socket, isOrganizer }) => {
             <div style={{ marginTop: "6px" }}>
               {question.isAnswered ? (
                 <span style={{ fontSize: "11px", backgroundColor: "#d4edda", color: "#155724", padding: "4px 8px", borderRadius: "3px" }}>
-                  ✓ Answered
+                  Answered
                 </span>
               ) : (
-                <span style={noAnsweredStyle}>⚠ Needs answer</span>
+                <span style={noAnsweredStyle}>Needs answer</span>
               )}
             </div>
 
@@ -373,7 +373,7 @@ const QATab = ({ eventId, socket, isOrganizer }) => {
             {answersOpen[question._id] && (
               <div style={answersContainerStyle}>
                 <p style={{ margin: "0 0 10px 0", fontSize: "13px", fontWeight: "500", color: "#28a745" }}>
-                  📝 Answers ({question.answers?.length || 0}):
+                  Answers ({question.answers?.length || 0}):
                 </p>
 
                 {question.answers && question.answers.length > 0 ? (

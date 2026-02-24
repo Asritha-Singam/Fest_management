@@ -76,8 +76,7 @@ const EventAttendance = () => {
             <h1 style={title}>Attendance Tracking</h1>
             <p style={eventName}>{event.eventName}</p>
             <p style={eventDate}>
-              📅 {new Date(event.eventStartDate).toLocaleDateString()} -{' '}
-              {new Date(event.eventEndDate).toLocaleDateString()}
+              {new Date(event.eventStartDate).toLocaleDateString()} - {new Date(event.eventEndDate).toLocaleDateString()}
             </p>
           </div>
           <div style={headerActions}>
@@ -89,7 +88,7 @@ const EventAttendance = () => {
                 ...(exportingCSV ? disabledButton : {}),
               }}
             >
-              {exportingCSV ? '⏳ Exporting...' : '📥 Export CSV'}
+              {exportingCSV ? 'Exporting...' : 'Export CSV'}
             </button>
           </div>
         </div>
@@ -103,7 +102,7 @@ const EventAttendance = () => {
               ...(activeTab === 'scanner' ? activeTabStyle : inactiveTabStyle),
             }}
           >
-            📷 QR Scanner
+            QR Scanner
           </button>
           <button
             onClick={() => setActiveTab('dashboard')}
@@ -112,7 +111,7 @@ const EventAttendance = () => {
               ...(activeTab === 'dashboard' ? activeTabStyle : inactiveTabStyle),
             }}
           >
-            📊 Dashboard
+            Dashboard
           </button>
         </div>
 
@@ -122,7 +121,7 @@ const EventAttendance = () => {
             <div style={scannerSection}>
               <QRScanner eventId={id} onScanComplete={handleScanComplete} />
               <div style={scannerNote}>
-                <div style={noteIcon}>💡</div>
+                <div style={noteIcon}></div>
                 <div>
                   <strong>Tip:</strong> After scanning tickets, switch to the Dashboard tab to
                   view attendance statistics and manage check-ins.

@@ -50,13 +50,13 @@ const AttendanceList = ({ participants, onManualCheckIn, onRefresh }) => {
           </span>
         </div>
         <button onClick={onRefresh} style={refreshButton} title="Refresh data">
-          🔄 Refresh
+          Refresh
         </button>
       </div>
 
       <div style={controls}>
         <div style={searchBox}>
-          <span style={searchIcon}>🔍</span>
+          <span style={searchIcon}></span>
           <input
             type="text"
             placeholder="Search by name, email, or ticket ID..."
@@ -101,7 +101,7 @@ const AttendanceList = ({ participants, onManualCheckIn, onRefresh }) => {
       <div style={listContainer}>
         {filteredParticipants.length === 0 ? (
           <div style={emptyState}>
-            <div style={emptyIcon}>📭</div>
+            <div style={emptyIcon}></div>
             <p style={emptyText}>
               {searchTerm || filterStatus !== 'all'
                 ? 'No participants match your filters'
@@ -162,7 +162,7 @@ const AttendanceList = ({ participants, onManualCheckIn, onRefresh }) => {
                       style={manualButton}
                       title="Manual check-in"
                     >
-                      ✋ Manual
+                      Manual
                     </button>
                   )}
                   {participant.manualOverride && participant.overrideReason && (
@@ -170,7 +170,7 @@ const AttendanceList = ({ participants, onManualCheckIn, onRefresh }) => {
                       style={viewReasonButton}
                       title={participant.overrideReason}
                     >
-                      ℹ️ Reason
+                      Reason
                     </button>
                   )}
                 </div>

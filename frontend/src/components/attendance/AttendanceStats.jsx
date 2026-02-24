@@ -4,7 +4,7 @@ const AttendanceStats = ({ statistics }) => {
   return (
     <div style={container}>
       <div style={statCard}>
-        <div style={statIcon}>👥</div>
+        <div style={statIcon}></div>
         <div style={statContent}>
           <div style={statValue}>{totalParticipants}</div>
           <div style={statLabel}>Total Participants</div>
@@ -12,7 +12,7 @@ const AttendanceStats = ({ statistics }) => {
       </div>
 
       <div style={{ ...statCard, ...successCard }}>
-        <div style={statIcon}>✅</div>
+        <div style={statIcon}></div>
         <div style={statContent}>
           <div style={statValue}>{checkedIn}</div>
           <div style={statLabel}>Checked In</div>
@@ -20,7 +20,7 @@ const AttendanceStats = ({ statistics }) => {
       </div>
 
       <div style={{ ...statCard, ...warningCard }}>
-        <div style={statIcon}>⏳</div>
+        <div style={statIcon}></div>
         <div style={statContent}>
           <div style={statValue}>{notScanned}</div>
           <div style={statLabel}>Not Scanned</div>
@@ -28,7 +28,7 @@ const AttendanceStats = ({ statistics }) => {
       </div>
 
       <div style={{ ...statCard, ...infoCard }}>
-        <div style={statIcon}>⚠️</div>
+        <div style={statIcon}></div>
         <div style={statContent}>
           <div style={statValue}>{manualOverrides}</div>
           <div style={statLabel}>Manual Overrides</div>
@@ -36,7 +36,7 @@ const AttendanceStats = ({ statistics }) => {
       </div>
 
       <div style={{ ...statCard, ...percentageCard }}>
-        <div style={statIcon}>📊</div>
+        <div style={statIcon}></div>
         <div style={statContent}>
           <div style={statValue}>{checkInPercentage}%</div>
           <div style={statLabel}>Check-in Rate</div>

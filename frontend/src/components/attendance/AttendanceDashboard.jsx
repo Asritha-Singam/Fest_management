@@ -66,7 +66,7 @@ const AttendanceDashboard = ({ eventId, eventName }) => {
   if (error) {
     return (
       <div style={errorContainer}>
-        <div style={errorIcon}>⚠️</div>
+        <div style={errorIcon}></div>
         <h3 style={errorTitle}>Failed to Load Dashboard</h3>
         <p style={errorText}>{error}</p>
         <button onClick={fetchDashboardData} style={retryButton}>
@@ -88,7 +88,7 @@ const AttendanceDashboard = ({ eventId, eventName }) => {
           <p style={subtitle}>{eventName || dashboardData.eventName}</p>
           {dashboardData.eventDate && (
             <p style={eventDate}>
-              📅 {new Date(dashboardData.eventDate).toLocaleDateString()}
+              {new Date(dashboardData.eventDate).toLocaleDateString()}
             </p>
           )}
         </div>

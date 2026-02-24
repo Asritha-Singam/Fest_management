@@ -81,10 +81,10 @@ const OrganizerDetail = () => {
 
           <div style={{ display: "flex", gap: "20px", fontSize: "14px", color: "#666", flexWrap: "wrap" }}>
             <p style={{ margin: 0 }}>
-              <strong>📧 Email:</strong> {organizer.contactEmail || "-"}
+              <strong>Email:</strong> {organizer.contactEmail || "-"}
             </p>
             <p style={{ margin: 0 }}>
-              <strong>📞 Contact:</strong> {organizer.contactNumber || "-"}
+              <strong>Contact:</strong> {organizer.contactNumber || "-"}
             </p>
           </div>
         </div>
@@ -129,13 +129,13 @@ const OrganizerDetail = () => {
 
                   <div style={{ marginTop: "15px", fontSize: "13px" }}>
                     <p style={{ margin: "5px 0" }}>
-                      <strong>📅 Date:</strong> {new Date(event.eventStartDate).toLocaleDateString()}
+                      <strong>Date:</strong> {new Date(event.eventStartDate).toLocaleDateString()}
                     </p>
                     <p style={{ margin: "5px 0" }}>
-                      <strong>💰 Fee:</strong> ₹{event.registrationFee || 0}
+                      <strong>Fee:</strong> ₹{event.registrationFee || 0}
                     </p>
                     <p style={{ margin: "5px 0" }}>
-                      <strong>📝 Type:</strong> {event.eventType}
+                      <strong>Type:</strong> {event.eventType}
                     </p>
                   </div>
 

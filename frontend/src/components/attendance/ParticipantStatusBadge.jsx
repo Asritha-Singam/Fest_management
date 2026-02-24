@@ -9,11 +9,11 @@ const ParticipantStatusBadge = ({ status, manualOverride }) => {
           ...(isCheckedIn ? checkedInBadge : notScannedBadge),
         }}
       >
-        {isCheckedIn ? '✓ Checked In' : '○ Not Scanned'}
+        {isCheckedIn ? 'Checked In' : 'Not Scanned'}
       </span>
       {manualOverride && (
         <span style={overrideBadge} title="Manual Override">
-          ⚠ Manual
+          Manual
         </span>
       )}
     </div>

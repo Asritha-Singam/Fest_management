@@ -63,7 +63,7 @@ const ManualCheckInModal = ({ isOpen, onClose, participant, onSubmit }) => {
         </div>
 
         <div style={warningBox}>
-          <div style={warningIcon}>⚠️</div>
+          <div style={warningIcon}></div>
           <div style={warningText}>
             Manual check-ins are logged for audit purposes. Please provide a detailed reason.
           </div>

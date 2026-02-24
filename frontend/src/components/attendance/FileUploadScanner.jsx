@@ -44,8 +44,6 @@ const FileUploadScanner = ({ onScanSuccess, onScanError }) => {
       <div id="file-qr-reader" style={{ display: 'none' }}></div>
 
       <div style={dropzone}>
-        <div style={uploadIcon}>📁</div>
-
         <p style={dropzoneText}>
           Upload a QR code image
         </p>
@@ -68,7 +66,7 @@ const FileUploadScanner = ({ onScanSuccess, onScanError }) => {
       </div>
 
       <div style={instructionBox}>
-        <h4 style={instructionTitle}>📸 How to upload:</h4>
+        <h4 style={instructionTitle}>How to upload:</h4>
         <ul style={instructionList}>
           <li>Take a clear photo of the QR code</li>
           <li>Make sure the QR code is fully visible</li>

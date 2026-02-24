@@ -219,7 +219,7 @@ const OrganizerEventDetail = () => {
               fontWeight: "600"
             }}
           >
-            📷 Attendance Tracking
+            Attendance Tracking
           </button>
         )}
 

@@ -173,7 +173,7 @@ const BrowseEvents = () => {
          }
        );
 
-       alert(`✅ Successfully registered for ${eventName}!\nTicket ID: ${response.data.ticketId}`);
+       alert(`Successfully registered for ${eventName}!\nTicket ID: ${response.data.ticketId}`);
        setRegisteredEvents(prev => new Set([...prev, eventId]));
        
        // Refresh registered events to ensure persistence
@@ -181,7 +181,7 @@ const BrowseEvents = () => {
      } catch (error) {
        console.error("Registration error:", error);
        const errorMsg = error.response?.data?.message || "Failed to register for event";
-       alert(`❌ ${errorMsg}`);
+       alert(`${errorMsg}`);
      } finally {
        setLoading(false);
      }
@@ -203,7 +203,7 @@ const BrowseEvents = () => {
                 color: viewMode === "recommended" ? "white" : "#2E1A47"
               }}
             >
-              🎯 For You
+              For You
             </button>
             <button
               onClick={fetchTrendingEvents}
@@ -213,7 +213,7 @@ const BrowseEvents = () => {
                 color: viewMode === "trending" ? "white" : "#2E1A47"
               }}
             >
-              🔥 Trending (Top 5/24h)
+              Trending (Top 5/24h)
             </button>
             <button
               onClick={() => fetchAllEvents()}
@@ -242,7 +242,7 @@ const BrowseEvents = () => {
           )}
         </div>
 
-        {/* 🔍 Search and Filters */}
+        {/* Search and Filters */}
         <div style={{ marginBottom: "20px", backgroundColor: "#f8f9fa", padding: "20px", borderRadius: "8px" }}>
           <div style={{ display: "flex", gap: "10px", marginBottom: "15px", flexWrap: "wrap" }}>
             <input
@@ -350,7 +350,7 @@ const BrowseEvents = () => {
                     <h3 style={{ margin: 0 }}>{event.eventName}</h3>
                     {event.recommendationScore > 0 && viewMode === "recommended" && (
                       <span style={styles.scoreBadge} title="Recommendation score">
-                        {event.recommendationScore}⭐
+                        {event.recommendationScore}
                       </span>
                     )}
                   </div>
@@ -361,13 +361,13 @@ const BrowseEvents = () => {
                   
                   <div style={{ marginBottom: "12px" }}>
                     <p style={{ fontSize: "13px", margin: "4px 0", color: "#444" }}>
-                      <strong>📅 Date:</strong> {new Date(event.eventStartDate).toLocaleDateString()}
+                      <strong>Date:</strong> {new Date(event.eventStartDate).toLocaleDateString()}
                     </p>
                     <p style={{ fontSize: "13px", margin: "4px 0", color: "#444" }}>
-                      <strong>👥 Organizer:</strong> {event.organizer.firstName} {event.organizer.lastName}
+                      <strong>Organizer:</strong> {event.organizer.firstName} {event.organizer.lastName}
                     </p>
                     <p style={{ fontSize: "13px", margin: "4px 0", color: "#444" }}>
-                      <strong>💰 Fee:</strong> ₹{event.registrationFee || 0}
+                      <strong>Fee:</strong> ₹{event.registrationFee || 0}
                     </p>
                     <p style={{ fontSize: "13px", margin: "4px 0", color: "#444" }}>
                       <strong> Eligibility:</strong> {event.eligibility === "IIIT_ONLY" ? "IIIT Only" : event.eligibility === "NON_IIIT_ONLY" ? "Non-IIIT Only" : "All"}
@@ -402,7 +402,7 @@ const BrowseEvents = () => {
                     const isDisabled = loading || isRegistered || isDeadlinePassed || isLimitReached || !isEligible;
                     
                     let buttonText = "Register Now";
-                    if (isRegistered) buttonText = "✓ Registered";
+                    if (isRegistered) buttonText = "Registered";
                     else if (isDeadlinePassed) buttonText = "Registration Closed";
                     else if (!isEligible) buttonText = "Not Eligible";
                     else if (isLimitReached) buttonText = "Event Full";

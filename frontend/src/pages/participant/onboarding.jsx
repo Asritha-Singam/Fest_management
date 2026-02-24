@@ -151,7 +151,7 @@ const Onboarding = () => {
                     }}
                   >
                     <div style={styles.checkbox}>
-                      {selectedOrganizers.includes(organizer._id) && "✓"}
+                      {selectedOrganizers.includes(organizer._id) && ""}
                     </div>
                     <div>
                       <h3 style={styles.organizerName}>

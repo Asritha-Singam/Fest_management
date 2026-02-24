@@ -137,14 +137,14 @@ const EventDetail = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert(`✅ Successfully registered for ${event.eventName}!\nTicket ID: ${response.data.ticketId}`);
+      alert(`Successfully registered for ${event.eventName}!\nTicket ID: ${response.data.ticketId}`);
       setIsRegistered(true);
       setShowRegistrationForm(false);
       await checkRegistrationStatus();
     } catch (error) {
       console.error("Registration error:", error);
       const errorMsg = error.response?.data?.message || "Failed to register for event";
-      alert(`❌ ${errorMsg}`);
+      alert(`${errorMsg}`);
     } finally {
       setRegistering(false);
     }
@@ -340,17 +340,17 @@ const EventDetail = () => {
 
           <div style={infoGrid}>
             <div style={infoItem}>
-              <strong>👥 Organizer</strong>
+              <strong>Organizer</strong>
               <p>{event.organizer.firstName} {event.organizer.lastName}</p>
             </div>
 
             <div style={infoItem}>
-              <strong>📅 Start Date</strong>
+              <strong>Start Date</strong>
               <p>{new Date(event.eventStartDate).toLocaleString()}</p>
             </div>
 
             <div style={infoItem}>
-              <strong>📅 End Date</strong>
+              <strong>End Date</strong>
               <p>{new Date(event.eventEndDate).toLocaleString()}</p>
             </div>
 
@@ -360,12 +360,12 @@ const EventDetail = () => {
             </div>
 
             <div style={infoItem}>
-              <strong>💰 Registration Fee</strong>
+              <strong>Registration Fee</strong>
               <p>₹{event.registrationFee || 0}</p>
             </div>
 
             <div style={infoItem}>
-              <strong>📝 Capacity</strong>
+              <strong>Capacity</strong>
               <p>{event.registrationLimit || "Unlimited"}</p>
             </div>
 
@@ -375,14 +375,14 @@ const EventDetail = () => {
             </div>
 
             <div style={infoItem}>
-              <strong>📊 Status</strong>
+              <strong>Status</strong>
               <p style={{ textTransform: "capitalize" }}>{event.status}</p>
             </div>
           </div>
 
           {event.eventTags && event.eventTags.length > 0 && (
             <div style={{ marginTop: "20px" }}>
-              <strong>🏷️ Tags:</strong>
+              <strong>Tags:</strong>
               <div style={{ display: "flex", gap: "8px", marginTop: "10px", flexWrap: "wrap" }}>
                 {event.eventTags.map((tag, idx) => (
                   <span key={idx} style={tagBadge}>{tag}</span>
@@ -432,7 +432,7 @@ const EventDetail = () => {
                 cursor: canRegister ? "pointer" : "not-allowed"
               }}
             >
-              {isRegistered ? "✓ Registered" : registering ? "Registering..." : "Register Now"}
+              {isRegistered ? "Registered" : registering ? "Registering..." : "Register Now"}
             </button>
 
             {isRegistered && event.eventType === "MERCHANDISE" && (
@@ -440,7 +440,7 @@ const EventDetail = () => {
                 <p style={{ margin: '0 0 15px 0', color: orderStatus?.paymentStatus === 'Approved' ? '#155724' : '#856404', fontWeight: '600' }}>
                   📋 Payment Status: 
                   <span style={{ color: orderStatus?.paymentStatus === 'Approved' ? '#28a745' : orderStatus?.paymentStatus === 'Rejected' ? '#dc3545' : '#ffc107' }}>
-                    {orderStatus?.paymentStatus === 'Approved' ? '✓ Approved' : orderStatus?.paymentStatus === 'Rejected' ? '✗ Rejected' : orderStatus?.payment ? 'Pending Approval' : 'Not Uploaded'}
+                    {orderStatus?.paymentStatus === 'Approved' ? 'Approved' : orderStatus?.paymentStatus === 'Rejected' ? 'Rejected' : orderStatus?.payment ? 'Pending Approval' : 'Not Uploaded'}
                   </span>
                 </p>
                 
@@ -452,7 +452,7 @@ const EventDetail = () => {
 
                 {paymentSuccess && (
                   <div style={{ padding: '10px', marginBottom: '15px', backgroundColor: '#e8f5e9', color: '#2e7d32', borderRadius: '4px', border: '1px solid #66bb6a' }}>
-                    ✓ Payment proof uploaded successfully! Awaiting organizer approval.
+                    Payment proof uploaded successfully! Awaiting organizer approval.
                   </div>
                 )}
 
@@ -529,7 +529,7 @@ const EventDetail = () => {
 
                 {orderStatus?.paymentStatus === 'Approved' && (
                   <div style={{ padding: '15px', marginTop: '15px', backgroundColor: '#e8f5e9', color: '#2e7d32', borderRadius: '4px', border: '1px solid #66bb6a', textAlign: 'center' }}>
-                    <p style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>✓ Your payment has been approved!</p>
+                    <p style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>Your payment has been approved!</p>
                     <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>You can now access your ticket.</p>
                   </div>
                 )}

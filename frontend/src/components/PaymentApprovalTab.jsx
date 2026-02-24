@@ -128,7 +128,7 @@ const PaymentApprovalTab = () => {
                                             onClick={() => handleApprovePayment(payment._id)}
                                             className="approve-btn"
                                         >
-                                            ✓ Approve
+                                            Approve
                                         </button>
                                         <button
                                             onClick={() => setRejectingPaymentId(payment._id)}

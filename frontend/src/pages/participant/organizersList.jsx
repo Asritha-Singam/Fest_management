@@ -99,7 +99,7 @@ const OrganizersList = () => {
 
                 {org.contactEmail && (
                   <p style={{ fontSize: "13px", color: "#444" }}>
-                    <strong>📧 Contact:</strong> {org.contactEmail}
+                    <strong>Contact:</strong> {org.contactEmail}
                   </p>
                 )}
 
@@ -112,7 +112,7 @@ const OrganizersList = () => {
                       backgroundColor: followedOrganizers.has(org._id) ? "#28a745" : "#2E1A47"
                     }}
                   >
-                    {followedOrganizers.has(org._id) ? "✓ Following" : "Follow"}
+                    {followedOrganizers.has(org._id) ? "Following" : "Follow"}
                   </button>
 
                   <button

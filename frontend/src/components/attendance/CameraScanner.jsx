@@ -83,7 +83,7 @@ const CameraScanner = ({ onScanSuccess, onScanError, isActive }) => {
   if (permissionDenied) {
     return (
       <div style={errorContainer}>
-        <div style={errorIcon}>📷</div>
+        <div style={errorIcon}></div>
         <h3 style={errorTitle}>Camera Access Denied</h3>
         <p style={errorText}>
           Please allow camera access in your browser settings to scan QR codes.
